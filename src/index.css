@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper: 36 30% 96%;
+    --ink: 218 35% 18%;
+    --ink-soft: 218 20% 35%;
+    --ink-faint: 218 10% 55%;
+    --terracotta: 14 65% 52%;
+    --terracotta-soft: 14 60% 92%;
+    --sage: 145 18% 45%;
+    --rule: 36 15% 85%;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans;
+    font-feature-settings: 'kern', 'liga', 'calt';
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+    font-variation-settings: 'opsz' 96;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-terracotta ring-offset-2 ring-offset-paper;
+  }
+
+  @media print {
+    body { @apply bg-white text-black; }
+  }
+}
+
+@layer utilities {
+  .rule-ornament::after {
+    content: '';
+    @apply block w-12 h-px bg-terracotta mt-3;
+  }
+}
