@@ -118,7 +118,7 @@ export default function Profile() {
         <h2 className="font-display text-display-md text-ink mb-6 rule-ornament">Personal</h2>
         <div className="space-y-4">
           <Field label="Display name">
-            <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Andrea Kozikowski" />
+            <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Jane Smith" />
           </Field>
         </div>
       </Card>
@@ -128,7 +128,7 @@ export default function Profile() {
         <h2 className="font-display text-display-md text-ink mb-6 rule-ornament">School</h2>
         <div className="space-y-4">
           <Field label="School name">
-            <Input value={info.school_name ?? ''} onChange={e => setField('school_name', e.target.value)} placeholder="Thunder Hill Elementary School" />
+            <Input value={info.school_name ?? ''} onChange={e => setField('school_name', e.target.value)} placeholder="Lakewood Elementary School" />
           </Field>
           <Field label="School year">
             <Input value={info.school_year ?? ''} onChange={e => setField('school_year', e.target.value)} placeholder="2025-2026" className="max-w-[160px]" />
@@ -175,7 +175,7 @@ export default function Profile() {
                 <Input
                   value={contact(key).extension ?? ''}
                   onChange={e => setContact(key, 'extension', e.target.value)}
-                  placeholder="54493"
+                  placeholder="ext. or number"
                 />
               </Field>
             </div>
@@ -213,7 +213,7 @@ export default function Profile() {
             <Input
               value={staffInput.name}
               onChange={e => setStaffInput(p => ({ ...p, name: e.target.value }))}
-              placeholder="Kelly Kennon"
+              placeholder="Full name"
             />
           </Field>
           <Field label="Role / location" className="flex-1">
