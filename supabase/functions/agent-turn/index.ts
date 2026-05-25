@@ -273,9 +273,8 @@ Deno.serve(async (req: Request) => {
     let rounds = 0;
 
     while (rounds < MAX_TOOL_ROUNDS) {
-      // TODO(models): Verify model string against Anthropic docs at wire-up time.
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-sonnet-4-6',
         system: agentSystemPrompt,
         tools: agentTools as unknown as Anthropic.Messages.Tool[],
         messages,

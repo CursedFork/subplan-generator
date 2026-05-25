@@ -26,11 +26,12 @@ export default function NewPlan() {
         setPlanState(res.state);
         setMessages([{ role: 'assistant', content: res.assistant_message }]);
       } catch (err) {
-        console.error('[NewPlan] auto-start failed:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[NewPlan] auto-start failed:', msg);
         setMessages([
           {
             role: 'assistant',
-            content: "Sorry, I couldn't connect. Please refresh and try again.",
+            content: `Connection error: ${msg}. Please refresh and try again.`,
           },
         ]);
       } finally {
@@ -53,10 +54,11 @@ export default function NewPlan() {
       setPlanState(res.state);
       setMessages((prev) => [...prev, { role: 'assistant', content: res.assistant_message }]);
     } catch (err) {
-      console.error('[NewPlan] send failed:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[NewPlan] send failed:', msg);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Something went wrong. Please try again.' },
+        { role: 'assistant', content: `Error: ${msg}` },
       ]);
     } finally {
       setLoading(false);
