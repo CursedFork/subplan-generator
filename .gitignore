@@ -13,4 +13,5 @@ vite.config.js
 !.vscode/settings.json
 *.log
 .supabase
+supabase/.temp
 coverage
