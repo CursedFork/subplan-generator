@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk@^0.32.1';
 import { z } from 'npm:zod@^3.23.8';
 import { agentTools } from './tools.ts';
-import { agentSystemPrompt } from './systemPrompt.ts';
+import { buildSystemPrompt } from './systemPrompt.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -275,6 +275,36 @@ async function handleTool(
       };
     }
 
+    case 'save_to_profile': {
+      const school_info = {
+        school_name: state.school_name,
+        school_year: state.school_year,
+        grade: state.grade,
+        subject: state.subject,
+        grades_covered: state.grades_covered,
+        principal: state.principal,
+        assistant_principal: state.assistant_principal,
+        school_counselor: state.school_counselor,
+        school_psychologist: state.school_psychologist,
+        helpful_staff: state.helpful_staff,
+        emergency_procedures: state.emergency_procedures,
+        health_concerns: state.health_concerns,
+        bathroom_rules: state.bathroom_rules,
+        behavior_management: state.behavior_management,
+        nurses_office: state.nurses_office,
+        special_instructions: state.special_instructions,
+      };
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ school_info, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+      if (profileError) {
+        console.error('[agent-turn] Failed to save profile:', profileError);
+        return { result: JSON.stringify({ ok: false, error: profileError.message }), newState: state };
+      }
+      return { result: JSON.stringify({ ok: true }), newState: state };
+    }
+
     case 'request_template': {
       return {
         result: JSON.stringify({ ok: true }),
@@ -397,6 +427,14 @@ Deno.serve(async (req: Request) => {
 
     const { session_id, user_message } = parsed.data;
 
+    // Fetch profile before session branch so we can pre-populate new sessions.
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('school_info')
+      .eq('id', user.id)
+      .single();
+    const storedSchoolInfo = (profileRow as { school_info?: unknown } | null)?.school_info ?? null;
+
     let sessionId: string;
     let priorMessages: MessageParam[];
     let currentState: AgentState;
@@ -440,10 +478,33 @@ Deno.serve(async (req: Request) => {
       const row = data as { id: string; messages: unknown; state: unknown };
       sessionId = row.id;
       priorMessages = [];
-      currentState = defaultState();
+      // Pre-populate state from stored profile so set_* tools confirm rather than re-collect.
+      const si = storedSchoolInfo as Record<string, unknown> | null;
+      currentState = si ? {
+        ...defaultState(),
+        school_name: (si['school_name'] as string | null) ?? null,
+        school_year: (si['school_year'] as string | null) ?? null,
+        grade: (si['grade'] as string | null) ?? null,
+        subject: (si['subject'] as string | null) ?? null,
+        grades_covered: Array.isArray(si['grades_covered']) ? si['grades_covered'] as string[] : [],
+        principal: asContact(si['principal']) ,
+        assistant_principal: asContact(si['assistant_principal']),
+        school_counselor: asContact(si['school_counselor']),
+        school_psychologist: asContact(si['school_psychologist']),
+        helpful_staff: Array.isArray(si['helpful_staff']) ? si['helpful_staff'] as HelpfulStaff[] : [],
+        emergency_procedures: (si['emergency_procedures'] as string | null) ?? null,
+        health_concerns: (si['health_concerns'] as string | null) ?? null,
+        bathroom_rules: (si['bathroom_rules'] as string | null) ?? null,
+        behavior_management: (si['behavior_management'] as string | null) ?? null,
+        nurses_office: (si['nurses_office'] as string | null) ?? null,
+        special_instructions: (si['special_instructions'] as string | null) ?? null,
+      } : defaultState();
     }
 
     const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY')! });
+    const systemPrompt = buildSystemPrompt(
+      storedSchoolInfo as Parameters<typeof buildSystemPrompt>[0],
+    );
 
     const messages: MessageParam[] = [
       ...priorMessages,
@@ -457,7 +518,7 @@ Deno.serve(async (req: Request) => {
     while (rounds < MAX_TOOL_ROUNDS) {
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        system: agentSystemPrompt,
+        system: systemPrompt,
         tools: agentTools as unknown as Anthropic.Messages.Tool[],
         messages,
         max_tokens: 4096,

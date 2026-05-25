@@ -298,6 +298,20 @@ export const agentTools = [
     },
   },
   {
+    name: 'save_to_profile',
+    description:
+      'Persist the current school/logistics info to the teacher\'s profile so it ' +
+      'pre-fills future plans. Call after the teacher confirms their info is accurate, ' +
+      'or after they correct it. Do NOT call before the teacher has confirmed.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        confirm: { type: 'boolean', const: true },
+      },
+      required: ['confirm'],
+    },
+  },
+  {
     name: 'finalize_plan',
     description:
       'Call when all required fields are filled and the teacher has confirmed. ' +

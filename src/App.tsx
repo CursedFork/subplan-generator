@@ -10,6 +10,7 @@ import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyEmail from '@/pages/auth/VerifyEmail';
 import Dashboard from '@/pages/Dashboard';
 import NewPlan from '@/pages/NewPlan';
+import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
 
 function RootRedirect() {
@@ -72,6 +73,19 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <Profile />
                 </AppLayout>
               </ProtectedRoute>
             </ErrorBoundary>

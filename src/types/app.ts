@@ -14,18 +14,6 @@ export interface UsageLimits {
   tier: SubscriptionTier;
 }
 
-export interface Profile {
-  id: string;
-  display_name: string | null;
-  school: string | null;
-  grade_levels: string[];
-  subjects: string[];
-  referral_code: string;
-  referral_credits: number;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface AdminContact {
   name: string;
   extension: string | null;
@@ -34,6 +22,39 @@ export interface AdminContact {
 export interface HelpfulStaff {
   name: string;
   role: string;
+}
+
+// Fields stored on the profile that pre-fill every new plan.
+export interface SchoolInfo {
+  school_name: string | null;
+  school_year: string | null;
+  grade: string | null;
+  subject: string | null;
+  grades_covered: string[];
+  principal: AdminContact | null;
+  assistant_principal: AdminContact | null;
+  school_counselor: AdminContact | null;
+  school_psychologist: AdminContact | null;
+  helpful_staff: HelpfulStaff[];
+  emergency_procedures: string | null;
+  health_concerns: string | null;
+  bathroom_rules: string | null;
+  behavior_management: string | null;
+  nurses_office: string | null;
+  special_instructions: string | null;
+}
+
+export interface Profile {
+  id: string;
+  display_name: string | null;
+  school: string | null;
+  grade_levels: string[];
+  subjects: string[];
+  referral_code: string;
+  referral_credits: number;
+  school_info: SchoolInfo;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AgentActivity {

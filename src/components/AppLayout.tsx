@@ -44,14 +44,14 @@ export function AppLayout({ children }: Props) {
               Templates
             </NavLink>
             <NavLink
-              to="/account"
+              to="/profile"
               className={({ isActive }) =>
                 `text-sm font-sans transition-colors ${
                   isActive ? 'text-ink font-semibold' : 'text-ink-soft hover:text-ink'
                 }`
               }
             >
-              Account
+              Profile
             </NavLink>
 
             <Button
