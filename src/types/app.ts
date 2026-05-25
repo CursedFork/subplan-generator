@@ -26,12 +26,25 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface AdminContact {
+  name: string;
+  extension: string | null;
+}
+
+export interface HelpfulStaff {
+  name: string;
+  role: string;
+}
+
 export interface AgentActivity {
   title: string;
   duration_min: number;
+  start_time: string | null;
+  end_time: string | null;
   instructions: string;
   materials: string[];
   period_key: string | null;
+  grade_label: string | null;
 }
 
 export interface AgentAttachment {
@@ -42,11 +55,43 @@ export interface AgentAttachment {
 
 export interface AgentState {
   template_id: string;
+
+  // School info
+  school_name: string | null;
+  school_year: string | null;
+  date: string | null;
+
+  // Teacher info
   grade: string | null;
   subject: string | null;
+  grades_covered: string[];
+
+  // Admin contacts
+  principal: AdminContact | null;
+  assistant_principal: AdminContact | null;
+  school_counselor: AdminContact | null;
+  school_psychologist: AdminContact | null;
+
+  // Helpful staff
+  helpful_staff: HelpfulStaff[];
+
+  // Classroom logistics
+  emergency_procedures: string | null;
+  health_concerns: string | null;
+  bathroom_rules: string | null;
+  behavior_management: string | null;
+  special_instructions: string | null;
+  nurses_office: string | null;
+
+  // Lesson content
   unit: { unit_name: string; standard_codes: string[] } | null;
   activities: AgentActivity[];
   attachments: AgentAttachment[];
+
+  // Closing
+  sign_off: string | null;
+
+  // Meta
   finalized: boolean;
   sub_plan_id: string | null;
 }

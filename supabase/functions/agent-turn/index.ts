@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import Anthropic from 'npm:@anthropic-ai/sdk';
-import { z } from 'npm:zod';
+import Anthropic from 'npm:@anthropic-ai/sdk@^0.32.1';
+import { z } from 'npm:zod@^3.23.8';
 import { agentTools } from './tools.ts';
 import { agentSystemPrompt } from './systemPrompt.ts';
 
@@ -18,12 +18,25 @@ const requestSchema = z.object({
 // =====================================================================
 // Agent state — accumulated across tool calls within and between turns.
 // =====================================================================
+interface AdminContact {
+  name: string;
+  extension: string | null;
+}
+
+interface HelpfulStaff {
+  name: string;
+  role: string;
+}
+
 interface Activity {
   title: string;
   duration_min: number;
+  start_time: string | null;
+  end_time: string | null;
   instructions: string;
   materials: string[];
   period_key: string | null;
+  grade_label: string | null;
 }
 
 interface Attachment {
@@ -34,11 +47,43 @@ interface Attachment {
 
 interface AgentState {
   template_id: string;
+
+  // School info
+  school_name: string | null;
+  school_year: string | null;
+  date: string | null;
+
+  // Teacher info
   grade: string | null;
   subject: string | null;
+  grades_covered: string[];
+
+  // Admin contacts
+  principal: AdminContact | null;
+  assistant_principal: AdminContact | null;
+  school_counselor: AdminContact | null;
+  school_psychologist: AdminContact | null;
+
+  // Helpful staff
+  helpful_staff: HelpfulStaff[];
+
+  // Classroom logistics
+  emergency_procedures: string | null;
+  health_concerns: string | null;
+  bathroom_rules: string | null;
+  behavior_management: string | null;
+  special_instructions: string | null;
+  nurses_office: string | null;
+
+  // Lesson content
   unit: { unit_name: string; standard_codes: string[] } | null;
   activities: Activity[];
   attachments: Attachment[];
+
+  // Closing
+  sign_off: string | null;
+
+  // Meta
   finalized: boolean;
   sub_plan_id: string | null;
 }
@@ -46,13 +91,39 @@ interface AgentState {
 function defaultState(): AgentState {
   return {
     template_id: 'standard-day',
+    school_name: null,
+    school_year: null,
+    date: null,
     grade: null,
     subject: null,
+    grades_covered: [],
+    principal: null,
+    assistant_principal: null,
+    school_counselor: null,
+    school_psychologist: null,
+    helpful_staff: [],
+    emergency_procedures: null,
+    health_concerns: null,
+    bathroom_rules: null,
+    behavior_management: null,
+    special_instructions: null,
+    nurses_office: null,
     unit: null,
     activities: [],
     attachments: [],
+    sign_off: null,
     finalized: false,
     sub_plan_id: null,
+  };
+}
+
+function asContact(raw: unknown): AdminContact | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r['name'] !== 'string') return null;
+  return {
+    name: r['name'],
+    extension: typeof r['extension'] === 'string' ? r['extension'] : null,
   };
 }
 
@@ -67,30 +138,122 @@ async function handleTool(
   userId: string,
 ): Promise<{ result: string; newState: AgentState }> {
   switch (name) {
-    case 'set_grade_level': {
-      const grade = input['grade'] as string;
+    case 'set_school_info': {
       return {
-        result: JSON.stringify({ ok: true, grade }),
-        newState: { ...state, grade },
+        result: JSON.stringify({ ok: true }),
+        newState: {
+          ...state,
+          school_name: (input['school_name'] as string | undefined) ?? state.school_name,
+          date: (input['date'] as string | undefined) ?? state.date,
+          school_year: (input['school_year'] as string | undefined) ?? state.school_year,
+        },
+      };
+    }
+
+    case 'set_admin_contacts': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: {
+          ...state,
+          principal: asContact(input['principal']) ?? state.principal,
+          assistant_principal: asContact(input['assistant_principal']) ?? state.assistant_principal,
+          school_counselor: asContact(input['school_counselor']) ?? state.school_counselor,
+          school_psychologist: asContact(input['school_psychologist']) ?? state.school_psychologist,
+        },
+      };
+    }
+
+    case 'set_grade_level': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, grade: input['grade'] as string },
+      };
+    }
+
+    case 'set_grades_covered': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, grades_covered: (input['grades'] as string[]) ?? [] },
       };
     }
 
     case 'set_subject': {
-      const subject = input['subject'] as string;
       return {
-        result: JSON.stringify({ ok: true, subject }),
-        newState: { ...state, subject },
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, subject: input['subject'] as string },
       };
     }
 
     case 'set_unit': {
-      const unit = {
-        unit_name: input['unit_name'] as string,
-        standard_codes: (input['standard_codes'] as string[]) ?? [],
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: {
+          ...state,
+          unit: {
+            unit_name: input['unit_name'] as string,
+            standard_codes: (input['standard_codes'] as string[]) ?? [],
+          },
+        },
+      };
+    }
+
+    case 'add_helpful_staff': {
+      const member: HelpfulStaff = {
+        name: input['name'] as string,
+        role: input['role'] as string,
       };
       return {
         result: JSON.stringify({ ok: true }),
-        newState: { ...state, unit },
+        newState: { ...state, helpful_staff: [...state.helpful_staff, member] },
+      };
+    }
+
+    case 'set_emergency_procedures': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, emergency_procedures: input['text'] as string },
+      };
+    }
+
+    case 'set_health_concerns': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, health_concerns: input['text'] as string },
+      };
+    }
+
+    case 'set_bathroom_rules': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, bathroom_rules: input['text'] as string },
+      };
+    }
+
+    case 'set_behavior_management': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, behavior_management: input['text'] as string },
+      };
+    }
+
+    case 'set_nurses_office': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, nurses_office: input['text'] as string },
+      };
+    }
+
+    case 'set_special_instructions': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, special_instructions: input['text'] as string },
+      };
+    }
+
+    case 'set_sign_off': {
+      return {
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, sign_off: input['message'] as string },
       };
     }
 
@@ -98,9 +261,12 @@ async function handleTool(
       const activity: Activity = {
         title: input['title'] as string,
         duration_min: input['duration_min'] as number,
+        start_time: (input['start_time'] as string | undefined) ?? null,
+        end_time: (input['end_time'] as string | undefined) ?? null,
         instructions: input['instructions'] as string,
-        materials: (input['materials'] as string[]) ?? [],
-        period_key: (input['period_key'] as string) ?? null,
+        materials: (input['materials'] as string[] | undefined) ?? [],
+        period_key: (input['period_key'] as string | undefined) ?? null,
+        grade_label: (input['grade_label'] as string | undefined) ?? null,
       };
       const activities = [...state.activities, activity];
       return {
@@ -110,10 +276,9 @@ async function handleTool(
     }
 
     case 'request_template': {
-      const template_id = input['template_id'] as string;
       return {
-        result: JSON.stringify({ ok: true, template_id }),
-        newState: { ...state, template_id },
+        result: JSON.stringify({ ok: true }),
+        newState: { ...state, template_id: input['template_id'] as string },
       };
     }
 
@@ -121,7 +286,7 @@ async function handleTool(
       const attachment: Attachment = {
         file_id: input['file_id'] as string,
         role: input['role'] as string,
-        note_for_sub: (input['note_for_sub'] as string) ?? null,
+        note_for_sub: (input['note_for_sub'] as string | undefined) ?? null,
       };
       return {
         result: JSON.stringify({ ok: true }),
@@ -130,17 +295,34 @@ async function handleTool(
     }
 
     case 'finalize_plan': {
-      const grade = state.grade ?? 'Unknown Grade';
+      const grade = state.grade ?? state.grades_covered.join(', ') ?? 'Unknown Grade';
       const subject = state.subject ?? 'Sub Plan';
       const today = new Date().toISOString().split('T')[0];
-      const title = `${subject} — Grade ${grade} — ${today}`;
+      const planDate = state.date ?? today;
+      const title = `${subject} — Grade ${grade} — ${planDate}`;
 
       const content = {
+        school_name: state.school_name,
+        school_year: state.school_year,
+        date: state.date,
         grade: state.grade,
         subject: state.subject,
+        grades_covered: state.grades_covered,
+        principal: state.principal,
+        assistant_principal: state.assistant_principal,
+        school_counselor: state.school_counselor,
+        school_psychologist: state.school_psychologist,
+        helpful_staff: state.helpful_staff,
+        emergency_procedures: state.emergency_procedures,
+        health_concerns: state.health_concerns,
+        bathroom_rules: state.bathroom_rules,
+        behavior_management: state.behavior_management,
+        special_instructions: state.special_instructions,
+        nurses_office: state.nurses_office,
         unit: state.unit,
         activities: state.activities,
         attachments: state.attachments,
+        sign_off: state.sign_off,
       };
 
       const { data: plan, error } = await supabase
@@ -179,7 +361,7 @@ async function handleTool(
   }
 }
 
-const MAX_TOOL_ROUNDS = 10;
+const MAX_TOOL_ROUNDS = 15;
 
 type MessageParam = Anthropic.Messages.MessageParam;
 type ToolResultBlockParam = Anthropic.Messages.ToolResultBlockParam;
@@ -249,10 +431,10 @@ Deno.serve(async (req: Request) => {
 
       if (error || !data) {
         console.error('[agent-turn] Failed to create session:', error);
-        return new Response(JSON.stringify({ error: 'Something went wrong' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ error: `Session create failed: ${error?.message ?? 'unknown'}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
       }
 
       const row = data as { id: string; messages: unknown; state: unknown };
@@ -336,8 +518,9 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {
-    console.error('[agent-turn] Unexpected error:', err);
-    return new Response(JSON.stringify({ error: 'Something went wrong' }), {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[agent-turn] Unexpected error:', message);
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
