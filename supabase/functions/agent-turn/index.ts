@@ -325,6 +325,21 @@ async function handleTool(
     }
 
     case 'finalize_plan': {
+      // Check usage cap via service role (RPC is restricted to service role).
+      const adminClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      const { data: usageRows } = await adminClient.rpc('increment_plan_usage', { p_user_id: userId });
+      const usage = Array.isArray(usageRows) ? (usageRows[0] as { allowed: boolean; cap: number } | undefined) : null;
+      // cap === 0 means no subscription exists (pre-Stripe) — allow through.
+      if (usage && !usage.allowed && usage.cap > 0) {
+        return {
+          result: JSON.stringify({ ok: false, error: 'Monthly plan limit reached. Upgrade your plan to create more.' }),
+          newState: state,
+        };
+      }
+
       const grade = state.grade ?? state.grades_covered.join(', ') ?? 'Unknown Grade';
       const subject = state.subject ?? 'Sub Plan';
       const today = new Date().toISOString().split('T')[0];
@@ -427,6 +442,23 @@ Deno.serve(async (req: Request) => {
 
     const { session_id, user_message } = parsed.data;
 
+    // ── Rate limiting ─────────────────────────────────────────────────
+    // New-session rate: max 5 plan sessions started per user per hour.
+    if (!session_id) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from('agent_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', oneHourAgo);
+      if ((count ?? 0) >= 5) {
+        return new Response(
+          JSON.stringify({ error: 'Too many plans started this hour. Please wait before creating another.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+    }
+
     // Fetch profile before session branch so we can pre-populate new sessions.
     const { data: profileRow } = await supabase
       .from('profiles')
@@ -460,6 +492,14 @@ Deno.serve(async (req: Request) => {
       currentState = (row.state && typeof row.state === 'object' && !Array.isArray(row.state))
         ? (row.state as AgentState)
         : defaultState();
+
+      // Message cap: prevent runaway sessions from accumulating indefinitely.
+      if (priorMessages.length >= 100) {
+        return new Response(
+          JSON.stringify({ error: 'This session has reached its message limit. Please finalize your plan or start a new one.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
     } else {
       const { data, error } = await supabase
         .from('agent_sessions')
