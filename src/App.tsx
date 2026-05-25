@@ -9,6 +9,7 @@ import SignUp from '@/pages/auth/SignUp';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyEmail from '@/pages/auth/VerifyEmail';
 import Dashboard from '@/pages/Dashboard';
+import NewPlan from '@/pages/NewPlan';
 import NotFound from '@/pages/NotFound';
 
 function RootRedirect() {
@@ -72,6 +73,17 @@ export default function App() {
                 <AppLayout>
                   <Dashboard />
                 </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/new-plan"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <NewPlan />
               </ProtectedRoute>
             </ErrorBoundary>
           }

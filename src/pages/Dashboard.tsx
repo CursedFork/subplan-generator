@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -24,13 +25,9 @@ export default function Dashboard() {
         </p>
 
         <div className="flex flex-wrap gap-4">
-          {/* Tooltip wrapper — Radix Tooltip is not in this increment's package list */}
-          <div className="relative group inline-block">
-            <Button disabled>New plan with the agent</Button>
-            <div className="absolute left-1/2 -translate-x-1/2 -top-9 bg-ink text-paper text-xs px-2.5 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-              Coming soon
-            </div>
-          </div>
+          <Button asChild>
+            <Link to="/new-plan">New plan with the agent</Link>
+          </Button>
 
           <div className="relative group inline-block">
             <Button variant="outline" disabled>
