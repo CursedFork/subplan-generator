@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <rect width="24" height="24" fill="hsl(36, 30%, 96%)" rx="4"/>
-  <circle cx="12" cy="12" r="7" fill="hsl(14, 65%, 52%)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="hsl(36,30%,96%)"/>
+  <!-- apple body -->
+  <path d="M16 15C10 15 7 19 7 23C7 27 10 29 16 29C22 29 25 27 25 23C25 19 22 15 16 15Z" fill="hsl(14,65%,52%)"/>
+  <!-- stem -->
+  <rect x="15" y="9" width="2" height="7" rx="1" fill="hsl(30,25%,35%)"/>
+  <!-- leaf — large sweep so it reads at 16 px -->
+  <path d="M16 14C16 7 25 4 25 4C25 4 25 14 16 14Z" fill="hsl(145,38%,40%)"/>
+  <!-- highlight -->
+  <ellipse cx="12" cy="20" rx="1.5" ry="2.5" fill="white" opacity="0.28" transform="rotate(-15 12 20)"/>
 </svg>
