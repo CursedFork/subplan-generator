@@ -1,5 +1,10 @@
 import type { AgentState, AdminContact } from '@/types/app';
 
+// Build the raw HTML string for a plan — used both for printing and preview.
+export function buildPlanHtml(state: AgentState, teacherName: string | null): string {
+  return buildHtml(state, teacherName);
+}
+
 // Open a new window with a print-ready HTML document and trigger the browser's
 // Save as PDF dialog. No external libraries required.
 export function printPlan(state: AgentState, teacherName: string | null): void {
