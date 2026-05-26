@@ -9,6 +9,7 @@ import SignIn from '@/pages/auth/SignIn';
 import SignUp from '@/pages/auth/SignUp';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyEmail from '@/pages/auth/VerifyEmail';
+import ResetPassword from '@/pages/auth/ResetPassword';
 import Dashboard from '@/pages/Dashboard';
 import Plans from '@/pages/Plans';
 import NewPlan from '@/pages/NewPlan';
@@ -66,6 +67,17 @@ export default function App() {
               <PublicOnlyRoute>
                 <VerifyEmail />
               </PublicOnlyRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        {/* Reset-password is NOT wrapped in PublicOnlyRoute — the user arrives
+            in a Supabase recovery session (technically signed in). */}
+        <Route
+          path="/reset-password"
+          element={
+            <ErrorBoundary>
+              <ResetPassword />
             </ErrorBoundary>
           }
         />
