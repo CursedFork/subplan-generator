@@ -92,7 +92,7 @@ function PlanCard({ plan, teacherName }: PlanCardProps) {
   }
 
   return (
-    <Card className="flex items-start gap-4">
+    <Card className="flex items-start gap-4 transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
       {/* Status dot */}
       <div className="shrink-0 mt-1">
         <span

@@ -3,17 +3,44 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --paper: 36 30% 96%;
-    --ink: 218 35% 18%;
-    --ink-soft: 218 20% 35%;
-    --ink-faint: 218 10% 55%;
-    --terracotta: 14 65% 52%;
+  /* ── Warm (default) ────────────────────────────────────────────── */
+  :root,
+  [data-theme="warm"] {
+    --paper:           36 30% 96%;
+    --ink:            218 35% 18%;
+    --ink-soft:       218 20% 35%;
+    --ink-faint:      218 10% 55%;
+    --terracotta:      14 65% 52%;
     --terracotta-soft: 14 60% 92%;
-    --sage: 145 18% 45%;
-    --rule: 36 15% 85%;
+    --sage:           145 18% 45%;
+    --rule:            36 15% 85%;
   }
 
+  /* ── Dark (navy slate) ─────────────────────────────────────────── */
+  [data-theme="dark"] {
+    --paper:           222 22% 11%;
+    --ink:             210 15% 92%;
+    --ink-soft:        210 10% 62%;
+    --ink-faint:       210  8% 38%;
+    --terracotta:       14 68% 62%;
+    --terracotta-soft:  14 30% 20%;
+    --sage:            145 22% 55%;
+    --rule:            222 18% 20%;
+  }
+
+  /* ── Ocean (cool teal) ─────────────────────────────────────────── */
+  [data-theme="ocean"] {
+    --paper:           204 38% 97%;
+    --ink:             210 50% 15%;
+    --ink-soft:        210 28% 36%;
+    --ink-faint:       210 18% 54%;
+    --terracotta:      196 65% 40%;
+    --terracotta-soft: 196 45% 90%;
+    --sage:            155 28% 40%;
+    --rule:            205 30% 87%;
+  }
+
+  /* ── Base ──────────────────────────────────────────────────────── */
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -43,5 +70,14 @@
   .rule-ornament::after {
     content: '';
     @apply block w-12 h-px bg-terracotta mt-3;
+  }
+
+  /* Smooth colour transitions when switching themes */
+  .theme-aware {
+    transition:
+      background-color 220ms ease,
+      border-color     220ms ease,
+      color            220ms ease,
+      box-shadow       220ms ease;
   }
 }

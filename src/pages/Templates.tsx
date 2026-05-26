@@ -148,7 +148,7 @@ export default function Templates() {
             const icon = ICONS[t.id] ?? '📄';
 
             return (
-              <Card key={t.id} className="flex flex-col gap-4">
+              <Card key={t.id} className="flex flex-col gap-4 transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
                 {/* Title row */}
                 <div className="flex items-start gap-3">
                   <span className="text-2xl leading-none mt-0.5" aria-hidden="true">

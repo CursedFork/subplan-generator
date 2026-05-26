@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+    <!-- Prevent flash-of-wrong-theme by applying saved theme before React renders -->
+    <script>try{var t=localStorage.getItem('subplan-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Kind, ready-to-print substitute teacher lesson plans, generated in minutes." />
     <title>SubPlan — Sub plans, ready in minutes</title>
