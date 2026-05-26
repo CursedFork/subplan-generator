@@ -9,6 +9,7 @@ import SignUp from '@/pages/auth/SignUp';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyEmail from '@/pages/auth/VerifyEmail';
 import Dashboard from '@/pages/Dashboard';
+import Plans from '@/pages/Plans';
 import NewPlan from '@/pages/NewPlan';
 import Profile from '@/pages/Profile';
 import Templates from '@/pages/Templates';
@@ -87,6 +88,19 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <Profile />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/plans"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <Plans />
                 </AppLayout>
               </ProtectedRoute>
             </ErrorBoundary>
