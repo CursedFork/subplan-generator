@@ -1,19 +1,24 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
+import { printPlan } from '@/lib/printPlan';
 import type { AgentState, AdminContact } from '@/types/app';
 
 const TEMPLATE_LABELS: Record<string, string> = {
-  'standard-day': 'Standard Day',
-  'single-period': 'Single Period',
-  'emergency': 'Emergency / Last-Minute',
-  'half-day': 'Half Day',
+  'standard-day':        'Standard Day',
+  'single-period':       'Single Period',
+  'emergency':           'Emergency / Last-Minute',
+  'half-day':            'Half Day',
+  'primary-classroom':   'Primary Classroom',
+  'reading-workshop':    'Reading Workshop',
+  'specialist-rotation': 'Specialist Rotation',
 };
 
 interface Props {
   state: AgentState | null;
+  teacherName?: string | null;
 }
 
-export function PlanPane({ state }: Props) {
+export function PlanPane({ state, teacherName }: Props) {
   if (!state) {
     return (
       <div className="w-1/2 flex items-center justify-center bg-paper/50 px-8">
@@ -34,11 +39,19 @@ export function PlanPane({ state }: Props) {
         </div>
         <h2 className="font-display text-display-md text-ink">Plan saved.</h2>
         <p className="font-sans text-sm text-ink-soft max-w-xs">
-          Your sub plan is ready. PDF and DOCX download will be available in a future update.
+          Your sub plan is ready. Print it or save it as a PDF using the button below.
         </p>
-        <Button asChild variant="outline" className="mt-2">
-          <Link to="/dashboard">Back to dashboard</Link>
-        </Button>
+        <div className="flex flex-col gap-2 mt-2 w-full max-w-[220px]">
+          <Button onClick={() => { printPlan(state, teacherName ?? null); }}>
+            Print / Save as PDF
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/dashboard">Back to dashboard</Link>
+          </Button>
+        </div>
+        <p className="text-xs font-sans text-ink-faint max-w-xs">
+          In the print dialog, choose &ldquo;Save as PDF&rdquo; as the destination.
+        </p>
       </div>
     );
   }

@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ChatPane } from '@/components/plan/ChatPane';
 import { PlanPane } from '@/components/plan/PlanPane';
 import { sendAgentMessage } from '@/lib/agentClient';
+import { useProfile } from '@/hooks/useProfile';
 import type { ChatMessage, AgentState } from '@/types/app';
 
 export default function NewPlan() {
+  const [searchParams] = useSearchParams();
+  const templateParam = searchParams.get('template');
+  const { data: profile } = useProfile();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [planState, setPlanState] = useState<AgentState | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -13,7 +18,8 @@ export default function NewPlan() {
   const [input, setInput] = useState('');
   const initialized = useRef(false);
 
-  // Auto-start: send an empty greeting turn so the agent opens the conversation.
+  // Auto-start: send an opening greeting so the agent opens the conversation.
+  // If a template was chosen on the Templates page, include it in the message.
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -21,7 +27,10 @@ export default function NewPlan() {
     void (async () => {
       setLoading(true);
       try {
-        const res = await sendAgentMessage(null, 'Hello, I need to create a sub plan.');
+        const greeting = templateParam
+          ? `Hello, I need to create a sub plan using the "${templateParam}" template.`
+          : 'Hello, I need to create a sub plan.';
+        const res = await sendAgentMessage(null, greeting);
         setSessionId(res.session_id);
         setPlanState(res.state);
         setMessages([{ role: 'assistant', content: res.assistant_message }]);
@@ -103,7 +112,7 @@ export default function NewPlan() {
           onSend={handleSend}
           disabled={finalized}
         />
-        <PlanPane state={planState} />
+        <PlanPane state={planState} teacherName={profile?.display_name ?? null} />
       </div>
     </div>
   );

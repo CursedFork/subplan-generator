@@ -11,6 +11,7 @@ import VerifyEmail from '@/pages/auth/VerifyEmail';
 import Dashboard from '@/pages/Dashboard';
 import NewPlan from '@/pages/NewPlan';
 import Profile from '@/pages/Profile';
+import Templates from '@/pages/Templates';
 import NotFound from '@/pages/NotFound';
 
 function RootRedirect() {
@@ -86,6 +87,19 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <Profile />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/templates"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <Templates />
                 </AppLayout>
               </ProtectedRoute>
             </ErrorBoundary>
