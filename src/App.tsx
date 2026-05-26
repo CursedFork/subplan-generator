@@ -15,6 +15,8 @@ import Plans from '@/pages/Plans';
 import NewPlan from '@/pages/NewPlan';
 import Profile from '@/pages/Profile';
 import Templates from '@/pages/Templates';
+import Admin from '@/pages/Admin';
+import { AdminRoute } from '@/components/AdminRoute';
 import NotFound from '@/pages/NotFound';
 
 function RootRedirect() {
@@ -141,6 +143,19 @@ export default function App() {
               <ProtectedRoute>
                 <NewPlan />
               </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ErrorBoundary>
+              <AdminRoute>
+                <AppLayout>
+                  <Admin />
+                </AppLayout>
+              </AdminRoute>
             </ErrorBoundary>
           }
         />

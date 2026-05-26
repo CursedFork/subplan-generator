@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { Button } from './ui/Button';
 
@@ -16,6 +17,7 @@ const NAV_LINKS = [
 
 export function AppLayout({ children }: Props) {
   const { signOut } = useAuth();
+  const isAdmin = useIsAdmin();
 
   return (
     <div className="min-h-screen bg-paper theme-aware">
@@ -51,6 +53,23 @@ export function AppLayout({ children }: Props) {
                 {label}
               </NavLink>
             ))}
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  [
+                    'relative px-3 py-1.5 text-sm font-sans rounded transition-colors duration-150',
+                    'after:absolute after:bottom-0 after:left-3 after:right-3 after:h-px',
+                    'after:bg-terracotta after:transition-transform after:duration-200 after:origin-left',
+                    isActive
+                      ? 'text-ink font-semibold after:scale-x-100'
+                      : 'text-ink-soft hover:text-ink after:scale-x-0 hover:bg-rule/30',
+                  ].join(' ')
+                }
+              >
+                Admin
+              </NavLink>
+            )}
           </nav>
 
           {/* Right-side controls */}
