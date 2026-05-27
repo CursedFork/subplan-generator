@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { ChatPane } from '@/components/plan/ChatPane';
 import { PlanPane } from '@/components/plan/PlanPane';
 import { sendAgentMessage } from '@/lib/agentClient';
@@ -10,6 +10,7 @@ export default function NewPlan() {
   const [searchParams] = useSearchParams();
   const templateParam = searchParams.get('template');
   const resumeSessionId = searchParams.get('session'); // existing session to resume
+  const navigate = useNavigate();
   const { data: profile } = useProfile();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -91,29 +92,47 @@ export default function NewPlan() {
   return (
     <div className="h-screen flex flex-col bg-paper">
       {/* Minimal header */}
-      <header className="shrink-0 flex items-center gap-4 px-6 h-14 border-b border-rule">
-        <Link
-          to="/dashboard"
-          className="text-ink-faint hover:text-ink transition-colors"
-          aria-label="Back to dashboard"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+      <header className="shrink-0 flex items-center justify-between px-6 h-14 border-b border-rule">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/dashboard"
+            className="text-ink-faint hover:text-ink transition-colors"
+            aria-label="Back to dashboard"
           >
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </Link>
-        <span className="font-sans text-sm font-semibold text-ink">
-          {resumeSessionId ? 'Continue draft' : 'New plan'}
-        </span>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </Link>
+          <span className="font-sans text-sm font-semibold text-ink">
+            {resumeSessionId ? 'Continue draft' : 'New plan'}
+          </span>
+        </div>
+
+        {/* Save & exit — draft is auto-saved after every turn so this just navigates away */}
+        {!finalized && sessionId && (
+          <button
+            onClick={() => { void navigate('/plans'); }}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-xs font-sans font-semibold text-ink-faint hover:text-ink border border-rule hover:border-ink-faint rounded px-3 py-1.5 transition-colors duration-150 disabled:opacity-40"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save &amp; exit
+          </button>
+        )}
       </header>
 
       {/* Split pane */}
