@@ -16,7 +16,7 @@ export default function ForgotPassword() {
     setLoading(true);
     await supabase.auth.resetPasswordForEmail(email, {
       // TODO(domain): Replace with real domain once purchased.
-      redirectTo: `${import.meta.env.VITE_APP_URL}/reset-password`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
     // Never reveal whether the address exists.

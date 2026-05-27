@@ -56,7 +56,7 @@ export default function SignUp() {
       email,
       password,
       options: {
-        emailRedirectTo: `${import.meta.env.VITE_APP_URL}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         // Referral code stored for later wiring in Stripe increment.
         data: referralCode ? { referral_code: referralCode } : undefined,
       },
