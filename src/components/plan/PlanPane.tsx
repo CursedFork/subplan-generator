@@ -79,14 +79,28 @@ export function PlanPane({ state, teacherName }: Props) {
 
   return (
     <div className="w-1/2 overflow-y-auto bg-paper/50 px-8 py-8">
-      {/* Template badge */}
-      <div className="flex items-center gap-2 mb-6">
-        <span className="text-xs font-sans font-semibold uppercase tracking-widest text-ink-faint">
-          Template
-        </span>
-        <span className="inline-block px-2.5 py-1 rounded-sm bg-terracotta-soft text-terracotta text-xs font-sans font-semibold">
-          {templateLabel}
-        </span>
+      {/* Template badge + export button */}
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-sans font-semibold uppercase tracking-widest text-ink-faint">
+            Template
+          </span>
+          <span className="inline-block px-2.5 py-1 rounded-sm bg-terracotta-soft text-terracotta text-xs font-sans font-semibold">
+            {templateLabel}
+          </span>
+        </div>
+        <button
+          onClick={() => { printPlan(state, teacherName ?? null); }}
+          title="Export current draft as PDF"
+          className="flex items-center gap-1.5 text-xs font-sans text-ink-faint hover:text-ink border border-rule hover:border-ink-faint rounded px-2.5 py-1 transition-colors duration-150 shrink-0"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          Export draft
+        </button>
       </div>
 
       <h2 className="font-display text-display-md text-ink mb-1 rule-ornament">

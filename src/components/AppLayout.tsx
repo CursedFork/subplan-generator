@@ -30,7 +30,7 @@ export function AppLayout({ children }: Props) {
             className="font-display text-xl text-ink hover:text-terracotta transition-colors duration-150 shrink-0"
             style={{ fontVariationSettings: "'opsz' 96" }}
           >
-            SubPlan
+            Teacher&rsquo;s Pet
           </Link>
 
           {/* Nav links */}

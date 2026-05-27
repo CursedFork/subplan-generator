@@ -88,7 +88,7 @@ export default function VerifyEmail() {
           Didn&rsquo;t get it? Check your spam folder, or{' '}
           {/* TODO(domain): replace with real support email */}
           <a
-            href="mailto:support@subplan.example"
+            href="mailto:support@teacherspet.app"
             className="text-ink-soft hover:text-terracotta transition-colors underline underline-offset-2"
           >
             contact support

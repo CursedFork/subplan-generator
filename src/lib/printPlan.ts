@@ -40,7 +40,7 @@ function buildHtml(state: AgentState, teacherName: string | null): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sub Plans${state.school_name ? ' — ' + esc(state.school_name) : ''}</title>
+  <title>Teacher's Pet — Sub Plan${state.school_name ? ' — ' + esc(state.school_name) : ''}</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -165,7 +165,7 @@ function buildHtml(state: AgentState, teacherName: string | null): string {
 
 <div class="header">
   <div>
-    <div class="header-title">Sub Plans</div>
+    <div class="header-title">Teacher's Pet</div>
     ${state.school_name || state.school_year
       ? `<div class="header-sub">${
           [state.school_name, state.school_year]

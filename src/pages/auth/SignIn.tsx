@@ -29,7 +29,7 @@ export default function SignIn() {
           For K–12 teachers
         </p>
         <h1 className="font-display text-display-lg text-ink rule-ornament">
-          Sub plans, ready in minutes.
+          Your class is in good hands.
         </h1>
         <p className="mt-8 font-sans text-lg text-ink-soft leading-relaxed max-w-sm">
           You shouldn&rsquo;t have to worry about your class when you&rsquo;re out. Tell us

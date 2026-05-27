@@ -79,11 +79,11 @@ export default function SignUp() {
           For K–12 teachers
         </p>
         <h1 className="font-display text-display-lg text-ink rule-ornament">
-          Your sub will thank you.
+          Teacher&rsquo;s Pet.
         </h1>
         <p className="mt-8 font-sans text-lg text-ink-soft leading-relaxed max-w-sm">
           Create an account and get your first sub plan together in under five minutes.
-          Everything your sub needs — room number, schedule, activities — in one clear document.
+          Everything your sub needs — contacts, schedule, activities — in one clear, kind document.
         </p>
         <p className="mt-4 font-sans text-base text-ink-faint max-w-sm">
           Kind to write. Kind to read.

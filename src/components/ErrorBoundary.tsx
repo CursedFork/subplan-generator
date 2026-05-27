@@ -38,10 +38,10 @@ export class ErrorBoundary extends Component<Props, State> {
               Try reloading the page. If this keeps happening, let us know at{' '}
               {/* TODO(domain): replace with real support email */}
               <a
-                href="mailto:support@subplan.example"
+                href="mailto:support@teacherspet.app"
                 className="text-terracotta underline underline-offset-2"
               >
-                support@subplan.example
+                support@teacherspet.app
               </a>
               .
             </p>

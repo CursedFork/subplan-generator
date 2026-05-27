@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 export type Theme = 'warm' | 'dark' | 'ocean';
 
 const ALL_THEMES: Theme[] = ['warm', 'dark', 'ocean'];
-const STORAGE_KEY = 'subplan-theme';
+const STORAGE_KEY = 'teacherspet-theme';
 
 function getInitialTheme(): Theme {
   try {
