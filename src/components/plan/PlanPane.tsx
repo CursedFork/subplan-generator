@@ -31,26 +31,43 @@ export function PlanPane({ state, teacherName }: Props) {
 
   if (state.finalized && state.sub_plan_id) {
     return (
-      <div className="w-1/2 flex flex-col items-center justify-center bg-paper/50 px-8 gap-4 text-center">
-        <div className="w-12 h-12 rounded-full bg-sage/20 flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-sage" aria-hidden="true">
+      <div className="w-1/2 flex flex-col items-center justify-center bg-paper/50 px-8 gap-5 text-center">
+        <div className="w-14 h-14 rounded-full bg-sage/20 flex items-center justify-center">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-sage" aria-hidden="true">
             <path d="M20 6L9 17l-5-5" />
           </svg>
         </div>
-        <h2 className="font-display text-display-md text-ink">Plan saved.</h2>
-        <p className="font-sans text-sm text-ink-soft max-w-xs">
-          Your sub plan is ready. Print it or save it as a PDF using the button below.
-        </p>
-        <div className="flex flex-col gap-2 mt-2 w-full max-w-[220px]">
-          <Button onClick={() => { printPlan(state, teacherName ?? null); }}>
+
+        <div>
+          <h2 className="font-display text-display-md text-ink">Plan saved!</h2>
+          <p className="font-sans text-sm text-ink-soft max-w-xs mt-2 leading-relaxed">
+            Your sub plan has been saved to <strong className="text-ink font-semibold">My Plans</strong>.
+            Print it or export it as a PDF to hand off to your sub.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 w-full max-w-[240px]">
+          <Button
+            onClick={() => { printPlan(state, teacherName ?? null); }}
+            className="w-full"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2" aria-hidden="true">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
             Print / Save as PDF
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/plans">View my plans</Link>
+          </Button>
+          <Button asChild variant="ghost" className="w-full text-ink-faint">
             <Link to="/dashboard">Back to dashboard</Link>
           </Button>
         </div>
-        <p className="text-xs font-sans text-ink-faint max-w-xs">
-          In the print dialog, choose &ldquo;Save as PDF&rdquo; as the destination.
+
+        <p className="text-xs font-sans text-ink-faint max-w-[220px] leading-relaxed">
+          In the print dialog, choose <em>Save as PDF</em> as the destination to get a file.
         </p>
       </div>
     );

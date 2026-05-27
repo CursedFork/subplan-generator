@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { useProfile, useUpdateProfile, useUpdateSchoolInfo } from '@/hooks/useProfile';
-import type { SchoolInfo, AdminContact, HelpfulStaff } from '@/types/app';
+import type { SchoolInfo, AdminContact, HelpfulStaff, ScheduleBlock } from '@/types/app';
 
 function emptyContact(): AdminContact { return { name: '', extension: null }; }
+function emptyBlock(): ScheduleBlock { return { period: '', start_time: '', end_time: '' }; }
 function emptySchoolInfo(): SchoolInfo {
   return {
     school_name: null, school_year: null,
@@ -13,6 +15,7 @@ function emptySchoolInfo(): SchoolInfo {
     principal: null, assistant_principal: null,
     school_counselor: null, school_psychologist: null,
     helpful_staff: [],
+    schedule: [],
     emergency_procedures: null, health_concerns: null,
     bathroom_rules: null, behavior_management: null,
     nurses_office: null, special_instructions: null,
@@ -20,6 +23,9 @@ function emptySchoolInfo(): SchoolInfo {
 }
 
 export default function Profile() {
+  const [searchParams] = useSearchParams();
+  const isOnboarding = searchParams.get('onboarding') === 'true';
+
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const updateSchoolInfo = useUpdateSchoolInfo();
@@ -27,6 +33,7 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState('');
   const [info, setInfo] = useState<SchoolInfo>(emptySchoolInfo());
   const [staffInput, setStaffInput] = useState({ name: '', role: '' });
+  const [blockInput, setBlockInput] = useState<ScheduleBlock>(emptyBlock());
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -35,6 +42,7 @@ export default function Profile() {
     setInfo({
       ...emptySchoolInfo(),
       ...profile.school_info,
+      schedule: profile.school_info?.schedule ?? [],
     });
   }, [profile]);
 
@@ -62,6 +70,33 @@ export default function Profile() {
 
   function removeStaff(i: number) {
     setInfo(prev => ({ ...prev, helpful_staff: prev.helpful_staff.filter((_, idx) => idx !== i) }));
+  }
+
+  function addBlock() {
+    if (!blockInput.period.trim()) return;
+    const block: ScheduleBlock = {
+      period: blockInput.period.trim(),
+      start_time: blockInput.start_time.trim(),
+      end_time: blockInput.end_time.trim(),
+    };
+    setInfo(prev => ({ ...prev, schedule: [...prev.schedule, block] }));
+    setBlockInput(emptyBlock());
+  }
+
+  function removeBlock(i: number) {
+    setInfo(prev => ({ ...prev, schedule: prev.schedule.filter((_, idx) => idx !== i) }));
+  }
+
+  function moveBlock(i: number, dir: -1 | 1) {
+    setInfo(prev => {
+      const arr = [...prev.schedule];
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return prev;
+      const tmp = arr[i]!;
+      arr[i] = arr[j]!;
+      arr[j] = tmp;
+      return { ...prev, schedule: arr };
+    });
   }
 
   async function handleSave() {
@@ -112,6 +147,28 @@ export default function Profile() {
           Your school info pre-fills every new plan. The agent confirms it at the start of each session.
         </p>
       </div>
+
+      {/* Onboarding welcome banner */}
+      {isOnboarding && (
+        <div className="rounded-md border border-sage/40 bg-sage/10 px-5 py-4 flex gap-3 items-start">
+          <svg
+            width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor"
+            strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+            className="text-sage shrink-0 mt-0.5" aria-hidden="true"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <div>
+            <p className="font-sans text-sm font-semibold text-ink">Account confirmed — welcome!</p>
+            <p className="font-sans text-sm text-ink-soft mt-0.5 leading-relaxed">
+              Fill in your school info below. You only need to do this once — it automatically
+              pre-fills every sub plan you create.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Personal */}
       <Card>
@@ -225,6 +282,93 @@ export default function Profile() {
             />
           </Field>
           <Button type="button" variant="outline" onClick={addStaff} className="shrink-0">Add</Button>
+        </div>
+      </Card>
+
+      {/* Daily schedule */}
+      <Card>
+        <h2 className="font-display text-display-md text-ink mb-2 rule-ornament">Daily Schedule</h2>
+        <p className="text-sm font-sans text-ink-soft mb-5">
+          Your typical block schedule. The agent uses these times to pre-build your plan —
+          you just fill in what to teach for each block.
+        </p>
+
+        {info.schedule.length > 0 && (
+          <div className="space-y-1.5 mb-4">
+            {/* Header row */}
+            <div className="grid grid-cols-[1fr_80px_80px_auto] gap-2 px-3 pb-1">
+              <span className="text-xs font-sans font-semibold uppercase tracking-widest text-ink-faint">Block / Period</span>
+              <span className="text-xs font-sans font-semibold uppercase tracking-widest text-ink-faint">Start</span>
+              <span className="text-xs font-sans font-semibold uppercase tracking-widest text-ink-faint">End</span>
+              <span className="sr-only">Actions</span>
+            </div>
+            {info.schedule.map((block, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-[1fr_80px_80px_auto] gap-2 items-center bg-paper border border-rule rounded-md px-3 py-2"
+              >
+                <span className="text-sm font-sans text-ink font-medium truncate">{block.period}</span>
+                <span className="text-sm font-sans text-ink-soft">{block.start_time || '—'}</span>
+                <span className="text-sm font-sans text-ink-soft">{block.end_time || '—'}</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => moveBlock(i, -1)}
+                    disabled={i === 0}
+                    className="text-ink-faint hover:text-ink transition-colors disabled:opacity-30 px-1"
+                    aria-label="Move up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveBlock(i, 1)}
+                    disabled={i === info.schedule.length - 1}
+                    className="text-ink-faint hover:text-ink transition-colors disabled:opacity-30 px-1"
+                    aria-label="Move down"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeBlock(i)}
+                    className="text-ink-faint hover:text-ink transition-colors text-xs font-sans ml-1"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add block form */}
+        <div className="flex gap-2 items-end flex-wrap">
+          <Field label="Block / Period name" className="flex-1 min-w-[140px]">
+            <Input
+              value={blockInput.period}
+              onChange={e => setBlockInput(p => ({ ...p, period: e.target.value }))}
+              placeholder="e.g. Reading Block, Period 2, Lunch"
+            />
+          </Field>
+          <Field label="Start" className="w-[88px]">
+            <Input
+              value={blockInput.start_time}
+              onChange={e => setBlockInput(p => ({ ...p, start_time: e.target.value }))}
+              placeholder="8:15"
+            />
+          </Field>
+          <Field label="End" className="w-[88px]">
+            <Input
+              value={blockInput.end_time}
+              onChange={e => setBlockInput(p => ({ ...p, end_time: e.target.value }))}
+              placeholder="9:00"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addBlock(); } }}
+            />
+          </Field>
+          <Button type="button" variant="outline" onClick={addBlock} className="shrink-0">
+            Add block
+          </Button>
         </div>
       </Card>
 

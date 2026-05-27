@@ -24,6 +24,12 @@ export interface HelpfulStaff {
   role: string;
 }
 
+export interface ScheduleBlock {
+  period: string;     // e.g. "Reading Block", "Period 1", "Lunch"
+  start_time: string; // e.g. "8:15"
+  end_time: string;   // e.g. "9:00"
+}
+
 // Fields stored on the profile that pre-fill every new plan.
 export interface SchoolInfo {
   school_name: string | null;
@@ -36,6 +42,7 @@ export interface SchoolInfo {
   school_counselor: AdminContact | null;
   school_psychologist: AdminContact | null;
   helpful_staff: HelpfulStaff[];
+  schedule: ScheduleBlock[];
   emergency_procedures: string | null;
   health_concerns: string | null;
   bathroom_rules: string | null;

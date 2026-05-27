@@ -10,6 +10,7 @@ import SignUp from '@/pages/auth/SignUp';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyEmail from '@/pages/auth/VerifyEmail';
 import ResetPassword from '@/pages/auth/ResetPassword';
+import AuthCallback from '@/pages/auth/AuthCallback';
 import Dashboard from '@/pages/Dashboard';
 import Plans from '@/pages/Plans';
 import NewPlan from '@/pages/NewPlan';
@@ -69,6 +70,17 @@ export default function App() {
               <PublicOnlyRoute>
                 <VerifyEmail />
               </PublicOnlyRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        {/* Auth callback — handles email confirmation token from Supabase.
+            Must NOT be wrapped in PublicOnlyRoute; the session isn't set yet. */}
+        <Route
+          path="/auth/callback"
+          element={
+            <ErrorBoundary>
+              <AuthCallback />
             </ErrorBoundary>
           }
         />

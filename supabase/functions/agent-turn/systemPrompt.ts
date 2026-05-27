@@ -1,3 +1,9 @@
+interface ScheduleBlock {
+  period: string;
+  start_time: string;
+  end_time: string;
+}
+
 interface StoredSchoolInfo {
   school_name?: string | null;
   school_year?: string | null;
@@ -9,6 +15,7 @@ interface StoredSchoolInfo {
   school_counselor?: { name: string; extension?: string | null } | null;
   school_psychologist?: { name: string; extension?: string | null } | null;
   helpful_staff?: { name: string; role: string }[];
+  schedule?: ScheduleBlock[];
   emergency_procedures?: string | null;
   health_concerns?: string | null;
   bathroom_rules?: string | null;
@@ -29,6 +36,10 @@ function summarizeProfile(info: StoredSchoolInfo): string {
   if (info.school_counselor) lines.push(`Counselor: ${info.school_counselor.name}${info.school_counselor.extension ? ` (ext. ${info.school_counselor.extension})` : ''}`);
   if (info.school_psychologist) lines.push(`Psychologist: ${info.school_psychologist.name}${info.school_psychologist.extension ? ` (ext. ${info.school_psychologist.extension})` : ''}`);
   if (info.helpful_staff?.length) lines.push(`Helpful staff: ${info.helpful_staff.map(s => `${s.name} (${s.role})`).join(', ')}`);
+  if (info.schedule?.length) {
+    const schedStr = info.schedule.map(b => `${b.period} (${b.start_time}–${b.end_time})`).join(', ');
+    lines.push(`Daily schedule: ${schedStr}`);
+  }
   if (info.emergency_procedures) lines.push(`Emergency procedures: on file`);
   if (info.health_concerns) lines.push(`Health concerns: on file`);
   if (info.bathroom_rules) lines.push(`Bathroom rules: on file`);
@@ -59,6 +70,9 @@ If the teacher's stored profile is provided above, your FIRST action is to:
 4. If the teacher says yes, call save_to_profile (confirm: true) to acknowledge, then move on.
 5. If the teacher corrects anything, update via the relevant tool, then call save_to_profile
    so the corrected info is stored for future plans.
+
+If a daily schedule is stored in the profile, immediately pre-populate activities with
+the correct block names and times, then ask what goes in each block.
 
 If no profile is stored yet, collect all information fresh and call save_to_profile after
 the teacher confirms their school/logistics info is complete.
@@ -95,8 +109,14 @@ and the attendance protocol (green/red card system, etc.). Write in clear impera
 - Grade(s) covered. For specialists seeing multiple classes, use set_grades_covered and
   capture each class as a separate activity block with grade_label.
 - Subject and unit.
-- For each block: title, start/end time, step-by-step instructions with zero assumed context.
-  Include timestamps within blocks when the teacher provides them.
+- If a daily schedule was pre-loaded from the teacher's profile, use those blocks as the
+  activity skeleton: pre-fill each activity's title, start_time, and end_time from the
+  schedule. Then ask, one block at a time: "What should the sub do during [Block Name]?"
+  Do NOT ask the teacher to re-enter times they already saved.
+- If no schedule was pre-loaded, build the schedule from scratch: for each block ask for
+  the title, start time, end time, and step-by-step instructions.
+- Instructions must have zero assumed context — write for someone who has never been in
+  this room. Include material locations, page numbers, grouping arrangements, etc.
 
 ## 7. Sign-off
 Generate a warm closing from the teacher thanking the sub, using their real name.
