@@ -13,6 +13,7 @@ export interface Plan {
   content: AgentState;
   created_at: string;
   finalized_at: string | null;
+  agent_session_id: string | null;
 }
 
 export function usePlans() {
@@ -23,7 +24,7 @@ export function usePlans() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sub_plans')
-        .select('id, title, grade, subject, template_id, status, content, created_at, finalized_at')
+        .select('id, title, grade, subject, template_id, status, content, created_at, finalized_at, agent_session_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

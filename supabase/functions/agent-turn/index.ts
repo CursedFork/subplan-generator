@@ -609,6 +609,66 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) console.error('[agent-turn] Failed to persist session:', updateError);
 
+    // ── Draft auto-save ──────────────────────────────────────────────
+    // Keep a live draft record in sub_plans so users can resume from
+    // the Plans tab. Delete it once the plan is finalized (the final
+    // record was already inserted by finalize_plan).
+    const hasMeaningfulContent = !!(
+      currentState.school_name ||
+      currentState.grade ||
+      currentState.grades_covered.length > 0 ||
+      currentState.activities.length > 0
+    );
+
+    if (!currentState.finalized && hasMeaningfulContent) {
+      const grade = currentState.grade ?? currentState.grades_covered[0] ?? null;
+      const subject = currentState.subject ?? null;
+      const draftTitle = [
+        subject,
+        grade ? `Grade ${grade}` : null,
+        '(Draft)',
+      ].filter(Boolean).join(' — ') || 'Untitled Draft';
+
+      // Check whether a draft already exists for this session
+      const { data: existingDraft } = await supabase
+        .from('sub_plans')
+        .select('id')
+        .eq('agent_session_id', sessionId)
+        .eq('status', 'draft')
+        .maybeSingle();
+
+      if (existingDraft) {
+        await supabase
+          .from('sub_plans')
+          .update({
+            title: draftTitle,
+            grade: currentState.grade,
+            subject: currentState.subject,
+            template_id: currentState.template_id,
+            content: currentState,
+          })
+          .eq('id', (existingDraft as { id: string }).id);
+      } else {
+        await supabase.from('sub_plans').insert({
+          user_id: userId,
+          title: draftTitle,
+          grade: currentState.grade,
+          subject: currentState.subject,
+          template_id: currentState.template_id,
+          content: currentState,
+          status: 'draft',
+          agent_session_id: sessionId,
+        });
+      }
+    } else if (currentState.finalized) {
+      // Remove the draft stub now that the final record exists
+      await supabase
+        .from('sub_plans')
+        .delete()
+        .eq('agent_session_id', sessionId)
+        .eq('status', 'draft');
+    }
+
     return new Response(
       JSON.stringify({
         session_id: sessionId,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { usePlans, useDeletePlan, type Plan } from '@/hooks/usePlans';
@@ -76,6 +76,7 @@ interface PlanCardProps {
 
 function PlanCard({ plan, teacherName }: PlanCardProps) {
   const deletePlan = useDeletePlan();
+  const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
 
   const isFinal = plan.status === 'final';
@@ -146,6 +147,25 @@ function PlanCard({ plan, teacherName }: PlanCardProps) {
             </svg>
             Print / PDF
           </Button>
+        )}
+
+        {!isFinal && (
+          plan.agent_session_id ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { void navigate(`/new-plan?session=${plan.agent_session_id}`); }}
+            >
+              Continue →
+            </Button>
+          ) : (
+            <span
+              title="This draft has no saved session and cannot be continued"
+              className="text-xs font-sans text-ink-faint px-2"
+            >
+              No session
+            </span>
+          )
         )}
 
         {/* Delete with inline confirmation */}

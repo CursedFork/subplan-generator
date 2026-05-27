@@ -9,6 +9,7 @@ import type { ChatMessage, AgentState } from '@/types/app';
 export default function NewPlan() {
   const [searchParams] = useSearchParams();
   const templateParam = searchParams.get('template');
+  const resumeSessionId = searchParams.get('session'); // existing session to resume
   const { data: profile } = useProfile();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,8 +19,7 @@ export default function NewPlan() {
   const [input, setInput] = useState('');
   const initialized = useRef(false);
 
-  // Auto-start: send an opening greeting so the agent opens the conversation.
-  // If a template was chosen on the Templates page, include it in the message.
+  // Auto-start: either resume an existing session or open a fresh one.
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -27,10 +27,22 @@ export default function NewPlan() {
     void (async () => {
       setLoading(true);
       try {
-        const greeting = templateParam
-          ? `Hello, I need to create a sub plan using the "${templateParam}" template.`
-          : 'Hello, I need to create a sub plan.';
-        const res = await sendAgentMessage(null, greeting);
+        let greeting: string;
+        let startSessionId: string | null;
+
+        if (resumeSessionId) {
+          // Resuming a draft — pass the existing session_id so the edge
+          // function reloads all prior messages and state.
+          startSessionId = resumeSessionId;
+          greeting = "I'd like to continue working on this plan. Can you remind me where we left off and tell me what's still needed?";
+        } else {
+          startSessionId = null;
+          greeting = templateParam
+            ? `Hello, I need to create a sub plan using the "${templateParam}" template.`
+            : 'Hello, I need to create a sub plan.';
+        }
+
+        const res = await sendAgentMessage(startSessionId, greeting);
         setSessionId(res.session_id);
         setPlanState(res.state);
         setMessages([{ role: 'assistant', content: res.assistant_message }]);
@@ -99,7 +111,9 @@ export default function NewPlan() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </Link>
-        <span className="font-sans text-sm font-semibold text-ink">New plan</span>
+        <span className="font-sans text-sm font-semibold text-ink">
+          {resumeSessionId ? 'Continue draft' : 'New plan'}
+        </span>
       </header>
 
       {/* Split pane */}
