@@ -613,14 +613,21 @@ Deno.serve(async (req: Request) => {
     // Keep a live draft record in sub_plans so users can resume from
     // the Plans tab. Delete it once the plan is finalized (the final
     // record was already inserted by finalize_plan).
+    //
+    // Save as soon as we have completed at least one full exchange
+    // (priorMessages ≥ 1 means the user has sent at least one message
+    // before this turn, so we have user+assistant history). Also save
+    // whenever the profile pre-populated meaningful fields, even on
+    // the very first turn.
     const hasMeaningfulContent = !!(
       currentState.school_name ||
       currentState.grade ||
       currentState.grades_covered.length > 0 ||
       currentState.activities.length > 0
     );
+    const hasExchangeHistory = priorMessages.length >= 1;
 
-    if (!currentState.finalized && hasMeaningfulContent) {
+    if (!currentState.finalized && (hasMeaningfulContent || hasExchangeHistory)) {
       const grade = currentState.grade ?? currentState.grades_covered[0] ?? null;
       const subject = currentState.subject ?? null;
       const draftTitle = [

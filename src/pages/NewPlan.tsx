@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChatPane } from '@/components/plan/ChatPane';
 import { PlanPane } from '@/components/plan/PlanPane';
 import { sendAgentMessage } from '@/lib/agentClient';
 import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuth';
 import type { ChatMessage, AgentState } from '@/types/app';
 
 export default function NewPlan() {
@@ -11,6 +13,8 @@ export default function NewPlan() {
   const templateParam = searchParams.get('template');
   const resumeSessionId = searchParams.get('session'); // existing session to resume
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data: profile } = useProfile();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -121,7 +125,10 @@ export default function NewPlan() {
         {/* Save & exit — draft is auto-saved after every turn so this just navigates away */}
         {!finalized && sessionId && (
           <button
-            onClick={() => { void navigate('/plans'); }}
+            onClick={() => {
+              void queryClient.invalidateQueries({ queryKey: ['plans', user?.id] });
+              void navigate('/plans');
+            }}
             disabled={loading}
             className="flex items-center gap-1.5 text-xs font-sans font-semibold text-ink-faint hover:text-ink border border-rule hover:border-ink-faint rounded px-3 py-1.5 transition-colors duration-150 disabled:opacity-40"
           >
