@@ -1,6 +1,6 @@
-# SubPlan Generator
+# Teacher's Pet
 
-Kind, ready-to-print substitute teacher lesson plans, generated in minutes.
+Kind sub plans, ready to print.
 
 ## Setup
 
@@ -69,8 +69,8 @@ App is at `http://localhost:5173`.
 
 ## Status
 
-In active development — see BUILD_BRIEF.md for current scope.
+In active development.
 
 Current increment covers: database schema, auth (email + Google + Apple), template definitions, and the agent-turn Edge Function skeleton. Stripe, the agent chat UI, file uploads, and PDF/DOCX rendering are in subsequent increments.
 
-<!-- TODO(domain): Replace all placeholder URLs (https://subplan.example) with the real domain once purchased. Run: grep -r "TODO(domain)" . -->
+<!-- TODO(domain): Replace all placeholder URLs with the real domain once purchased. Run: grep -r "TODO(domain)" . -->
