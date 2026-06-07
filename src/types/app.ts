@@ -1,4 +1,4 @@
-// Hand-written app-level types. Do not put DB row types here — those come
+﻿// Hand-written app-level types. Do not put DB row types here â€” those come
 // from src/types/database.ts (generated).
 
 import type { User } from '@supabase/supabase-js';
