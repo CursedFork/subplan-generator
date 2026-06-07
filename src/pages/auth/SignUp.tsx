@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Card } from '@/components/ui/Card';
+import { Logo } from '@/components/logo/Logo';
 
 const signUpSchema = z
   .object({
@@ -57,7 +58,6 @@ export default function SignUp() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        // Referral code stored for later wiring in Stripe increment.
         data: referralCode ? { referral_code: referralCode } : undefined,
       },
     });
@@ -72,121 +72,123 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-paper flex">
-      {/* Left: marketing */}
-      <div className="hidden lg:flex lg:w-1/2 bg-terracotta-soft flex-col justify-center px-16 py-20">
-        <p className="font-sans text-xs uppercase tracking-widest text-terracotta mb-6">
-          For K–12 teachers
-        </p>
-        <h1 className="font-display text-display-lg text-ink rule-ornament">
-          Teacher&rsquo;s Pet.
-        </h1>
-        <p className="mt-8 font-sans text-lg text-ink-soft leading-relaxed max-w-sm">
-          Create an account and get your first sub plan together in under five minutes.
-          Everything your sub needs — contacts, schedule, activities — in one clear, kind document.
-        </p>
-        <p className="mt-4 font-sans text-base text-ink-faint max-w-sm">
-          Kind to write. Kind to read.
-        </p>
+    <div className="min-h-screen bg-paper flex flex-col">
+      {/* Logo top-left */}
+      <div className="px-8 pt-6">
+        <Link to="/" aria-label="Teacher's Pet home">
+          <Logo />
+        </Link>
       </div>
 
-      {/* Right: form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-16">
-        <Card className="w-full max-w-sm">
-          <h2 className="font-display text-display-md text-ink mb-1">Create your account.</h2>
-          <p className="font-sans text-sm text-ink-soft mb-8">
-            Already have one?{' '}
-            <Link to="/signin" className="text-terracotta hover:underline underline-offset-2">
-              Sign in
-            </Link>
+      <div className="flex flex-1">
+        {/* Left: marketing */}
+        <div className="hidden lg:flex lg:w-1/2 bg-terracotta-soft flex-col justify-center px-16 py-20">
+          <h1 className="font-display text-display-lg text-ink rule-ornament">
+            Make a sub day easier.
+          </h1>
+          <p className="mt-8 font-sans text-lg text-ink-soft leading-relaxed max-w-sm hidden sm:block">
+            Create an account and get your first sub plan together in under five minutes.
           </p>
+        </div>
 
-          <form
-            onSubmit={(e) => {
-              void handleSubmit(e);
-            }}
-            className="space-y-5"
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              {fieldErrors.email && (
-                <p className="text-xs font-sans text-terracotta">{fieldErrors.email}</p>
-              )}
-            </div>
+        {/* Right: form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-16">
+          <Card className="w-full max-w-sm">
+            <h2 className="font-display text-display-md text-ink mb-1">Create your account.</h2>
+            <p className="font-sans text-sm text-ink-soft mb-8">
+              Already have one?{' '}
+              <Link to="/signin" className="text-terracotta hover:underline underline-offset-2">
+                Sign in
+              </Link>
+            </p>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              {fieldErrors.password && (
-                <p className="text-xs font-sans text-terracotta">{fieldErrors.password}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-password">Confirm password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-              {fieldErrors.confirmPassword && (
-                <p className="text-xs font-sans text-terracotta">{fieldErrors.confirmPassword}</p>
-              )}
-            </div>
-
-            {formError && (
-              <p className="text-sm font-sans text-terracotta" role="alert">
-                {formError}
-              </p>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account…' : 'Create account'}
-            </Button>
-          </form>
-
-          {/* Referral code — captured for later Stripe increment wiring */}
-          <div className="mt-6">
-            {!showReferral ? (
-              <button
-                type="button"
-                className="text-xs font-sans text-ink-faint hover:text-ink-soft transition-colors underline underline-offset-2"
-                onClick={() => setShowReferral(true)}
-              >
-                Have a referral code?
-              </button>
-            ) : (
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+              className="space-y-5"
+            >
               <div className="space-y-1.5">
-                <Label htmlFor="referral">Referral code</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="referral"
-                  type="text"
-                  placeholder="e.g. AB12CD34"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
+                {fieldErrors.email && (
+                  <p className="text-xs font-sans text-terracotta">{fieldErrors.email}</p>
+                )}
               </div>
-            )}
-          </div>
-        </Card>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                {fieldErrors.password && (
+                  <p className="text-xs font-sans text-terracotta">{fieldErrors.password}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-password">Confirm password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                {fieldErrors.confirmPassword && (
+                  <p className="text-xs font-sans text-terracotta">{fieldErrors.confirmPassword}</p>
+                )}
+              </div>
+
+              {formError && (
+                <p className="text-sm font-sans text-terracotta" role="alert">
+                  {formError}
+                </p>
+              )}
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating account…' : 'Create account'}
+              </Button>
+            </form>
+
+            {/* Referral code */}
+            <div className="mt-6">
+              {!showReferral ? (
+                <button
+                  type="button"
+                  className="text-xs font-sans text-ink-faint hover:text-ink-soft transition-colors underline underline-offset-2"
+                  onClick={() => setShowReferral(true)}
+                >
+                  Have a referral code?
+                </button>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="referral">Referral code</Label>
+                  <Input
+                    id="referral"
+                    type="text"
+                    placeholder="e.g. AB12CD34"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  />
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

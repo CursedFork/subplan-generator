@@ -1,4 +1,4 @@
-// Hand-written app-level types. Do not put DB row types here — those come
+﻿// Hand-written app-level types. Do not put DB row types here — those come
 // from src/types/database.ts (generated).
 
 import type { User } from '@supabase/supabase-js';
@@ -60,6 +60,13 @@ export interface Profile {
   referral_code: string;
   referral_credits: number;
   school_info: SchoolInfo;
+  // Onboarding wizard columns (migration 20260526120000)
+  onboarding_step: number;
+  onboarding_completed_at: string | null;
+  school_level: string | null;
+  primary_grade: string | null;
+  classroom_notes: string | null;
+  default_template_id: string | null;
   created_at: string;
   updated_at: string;
 }

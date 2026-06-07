@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 
@@ -31,10 +31,10 @@ export default function AuthCallback() {
           );
           setState('error');
         } else if (type === 'signup') {
-          // New user — send them straight to Profile setup
-          void navigate('/profile?onboarding=true', { replace: true });
+          // New user â€” send them straight to Profile setup
+          void navigate('/welcome', { replace: true });
         } else {
-          // Password recovery or other type — handled by ResetPassword page
+          // Password recovery or other type â€” handled by ResetPassword page
           void navigate('/reset-password', { replace: true });
         }
       });
@@ -79,7 +79,7 @@ export default function AuthCallback() {
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-rule border-t-terracotta animate-spin" aria-label="Verifying…" />
+      <div className="w-8 h-8 rounded-full border-2 border-rule border-t-terracotta animate-spin" aria-label="Verifyingâ€¦" />
     </div>
   );
 }

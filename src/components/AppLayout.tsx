@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { Button } from './ui/Button';
+import { Logo } from './logo/Logo';
 
 interface Props {
   children: ReactNode;
@@ -27,10 +28,10 @@ export function AppLayout({ children }: Props) {
           {/* Logo */}
           <Link
             to="/dashboard"
-            className="font-display text-xl text-ink hover:text-terracotta transition-colors duration-150 shrink-0"
-            style={{ fontVariationSettings: "'opsz' 96" }}
+            className="hover:opacity-80 transition-opacity duration-150 shrink-0"
+            aria-label="Teacher's Pet — go to dashboard"
           >
-            Teacher&rsquo;s Pet
+            <Logo />
           </Link>
 
           {/* Nav links */}
