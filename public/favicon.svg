@@ -1,24 +1,12 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Apple body — rounded terracotta -->
-  <path
-    d="M7 13C7 8.029 10.686 4 15.5 4C20.314 4 24 8.029 24 13C24 19.627 20.686 27 15.5 27C10.314 27 7 19.627 7 13Z"
-    fill="#C8532B"
-  />
-  <!-- Left lobe -->
-  <path
-    d="M15.5 4C15.5 4 13 2 10.5 3C9 3.5 8 5 9.5 6.5C11 8 13.5 6.5 15.5 4Z"
-    fill="#C8532B"
-  />
-  <!-- Right lobe -->
-  <path
-    d="M15.5 4C15.5 4 18 2 20.5 3C22 3.5 23 5 21.5 6.5C20 8 17.5 6.5 15.5 4Z"
-    fill="#C8532B"
-  />
-  <!-- Stem -->
-  <line x1="15.5" y1="4" x2="15.5" y2="1.5" stroke="#233054" stroke-width="1.75" stroke-linecap="round"/>
-  <!-- Leaf -->
-  <path
-    d="M15.5 3C15.5 3 17.5 1.5 20 1C20 1 19.5 3.5 17 4.5C16 5 15.5 4.5 15.5 3Z"
-    fill="#233054"
-  />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background pill -->
+  <rect width="32" height="32" rx="6" fill="hsl(36,30%,96%)"/>
+  <!-- Eraser cap -->
+  <polygon points="22,6 24,4 28,8 26,10" fill="hsl(14,45%,76%)"/>
+  <!-- Ferrule -->
+  <polygon points="20,8 22,6 26,10 24,12" fill="hsl(218,35%,18%)"/>
+  <!-- Body -->
+  <polygon points="6,23 20,8 24,12 10,27" fill="hsl(14,65%,52%)"/>
+  <!-- Tip -->
+  <polygon points="6,23 10,27 4,28" fill="hsl(218,35%,18%)"/>
 </svg>

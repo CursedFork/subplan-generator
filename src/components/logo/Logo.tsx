@@ -1,6 +1,6 @@
-import { AppleClassic } from './variants/AppleClassic';
-import { AppleEditorial } from './variants/AppleEditorial';
-import { AppleStamped } from './variants/AppleStamped';
+import { PencilClassic } from './variants/PencilClassic';
+import { PencilEditorial } from './variants/PencilEditorial';
+import { PencilStamped } from './variants/PencilStamped';
 import { Wordmark } from './Wordmark';
 
 // Active logo variant. Swap this to try a different mark.
@@ -9,9 +9,9 @@ type LogoVariant = 'classic' | 'editorial' | 'stamped';
 const ACTIVE_VARIANT: LogoVariant = 'classic';
 
 const ICONS: Record<LogoVariant, React.ComponentType<{ size?: number }>> = {
-  classic: AppleClassic,
-  editorial: AppleEditorial,
-  stamped: AppleStamped,
+  classic:   PencilClassic,
+  editorial: PencilEditorial,
+  stamped:   PencilStamped,
 };
 
 interface LogoProps {
