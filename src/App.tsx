@@ -1,5 +1,5 @@
 ﻿import { Routes, Route } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { AuthProvider } from '@/hooks/useAuth';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -210,3 +210,4 @@ export default function App() {
     </ThemeProvider>
   );
 }
+

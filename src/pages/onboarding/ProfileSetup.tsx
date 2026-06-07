@@ -2,7 +2,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
 import { ChipGroup } from '@/components/ui/ChipGroup';
 import { Logo } from '@/components/logo/Logo';
@@ -369,3 +368,4 @@ export default function ProfileSetup() {
     </div>
   );
 }
+
