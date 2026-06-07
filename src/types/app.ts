@@ -49,6 +49,7 @@ export interface SchoolInfo {
   behavior_management: string | null;
   nurses_office: string | null;
   special_instructions: string | null;
+  notes: string | null;
 }
 
 export interface Profile {

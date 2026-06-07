@@ -22,6 +22,7 @@ interface StoredSchoolInfo {
   behavior_management?: string | null;
   nurses_office?: string | null;
   special_instructions?: string | null;
+  notes?: string | null;
 }
 
 function summarizeProfile(info: StoredSchoolInfo): string {
@@ -46,6 +47,7 @@ function summarizeProfile(info: StoredSchoolInfo): string {
   if (info.behavior_management) lines.push(`Behavior system: on file`);
   if (info.nurses_office) lines.push(`Nurse's office info: on file`);
   if (info.special_instructions) lines.push(`Special instructions: on file`);
+  if (info.notes) lines.push(`Teacher notes: ${info.notes}`);
   return lines.join('\n');
 }
 

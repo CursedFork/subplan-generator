@@ -19,6 +19,7 @@ function emptySchoolInfo(): SchoolInfo {
     emergency_procedures: null, health_concerns: null,
     bathroom_rules: null, behavior_management: null,
     nurses_office: null, special_instructions: null,
+    notes: null,
   };
 }
 
@@ -113,6 +114,7 @@ export default function Profile() {
       behavior_management: info.behavior_management || null,
       nurses_office: info.nurses_office || null,
       special_instructions: info.special_instructions || null,
+      notes: info.notes || null,
       principal: info.principal?.name ? info.principal : null,
       assistant_principal: info.assistant_principal?.name ? info.assistant_principal : null,
       school_counselor: info.school_counselor?.name ? info.school_counselor : null,
@@ -397,6 +399,21 @@ export default function Profile() {
         </div>
       </Card>
 
+      {/* Notes */}
+      <Card>
+        <h2 className="font-display text-display-md text-ink mb-2 rule-ornament">Notes</h2>
+        <p className="text-sm font-sans text-ink-soft mb-5">
+          Anything that doesn&rsquo;t fit neatly elsewhere — class quirks, helpful context,
+          reminders to yourself. The agent will include this when building plans.
+        </p>
+        <Textarea
+          value={info.notes ?? ''}
+          onChange={v => setField('notes', v)}
+          placeholder="e.g. The class goldfish is named Mr. Bubbles and needs feeding at noon. Room 12 door sticks — pull hard. Students know the quiet signal (hand raised)."
+          rows={5}
+        />
+      </Card>
+
       {/* Save */}
       <div className="flex items-center gap-4 pb-12">
         <Button onClick={handleSave} disabled={isSaving}>
@@ -435,13 +452,13 @@ function Field({
   );
 }
 
-function Textarea({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Textarea({ value, onChange, placeholder, rows = 3 }: { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
   return (
     <textarea
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      rows={3}
+      rows={rows}
       className="w-full rounded-md border border-rule bg-paper px-3 py-2 text-sm font-sans text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-terracotta/30 focus:border-terracotta resize-y"
     />
   );
