@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Layers } from 'lucide-react';
+import { Layers, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { cn } from '@/lib/utils';
+import { generateWorksheet } from '@/lib/worksheetClient';
 import type {
   WorksheetRequest,
+  WorksheetResponse,
   WorksheetCategory,
   WorksheetTone,
   GradeBand,
@@ -40,47 +42,17 @@ const TONES: { value: WorksheetTone; label: string; description: string }[] = [
 ];
 
 const CATEGORIES: { value: WorksheetCategory; label: string; detail: string }[] = [
-  {
-    value: 'math-facts',
-    label: 'Math Facts Drill',
-    detail: 'Arithmetic & times-table grids',
-  },
-  {
-    value: 'word-problems',
-    label: 'Word Problems',
-    detail: 'Math in context, multi-step reasoning',
-  },
-  {
-    value: 'reading-comprehension',
-    label: 'Reading Comprehension',
-    detail: 'Passage + questions',
-  },
-  {
-    value: 'vocabulary-matching',
-    label: 'Vocabulary Matching',
-    detail: 'Word bank ↔ definitions or context sentences',
-  },
-  {
-    value: 'fill-in-the-blank',
-    label: 'Fill in the Blank',
-    detail: 'Cloze passages for any subject',
-  },
-  {
-    value: 'graphic-organizer',
-    label: 'Graphic Organizer',
-    detail: 'Venn, T-chart, story map, concept web',
-  },
-  {
-    value: 'short-answer',
-    label: 'Short Answer',
-    detail: 'Open response / exit ticket questions',
-  },
-  {
-    value: 'multiple-choice',
-    label: 'Multiple Choice',
-    detail: 'Test-style, four options per item',
-  },
+  { value: 'math-facts',            label: 'Math Facts Drill',      detail: 'Arithmetic & times-table grids' },
+  { value: 'word-problems',         label: 'Word Problems',         detail: 'Math in context, multi-step reasoning' },
+  { value: 'reading-comprehension', label: 'Reading Comprehension', detail: 'Passage + questions' },
+  { value: 'vocabulary-matching',   label: 'Vocabulary Matching',   detail: 'Word bank ↔ definitions or context sentences' },
+  { value: 'fill-in-the-blank',     label: 'Fill in the Blank',     detail: 'Cloze passages for any subject' },
+  { value: 'graphic-organizer',     label: 'Graphic Organizer',     detail: 'Venn, T-chart, story map, concept web' },
+  { value: 'short-answer',          label: 'Short Answer',          detail: 'Open response / exit ticket questions' },
+  { value: 'multiple-choice',       label: 'Multiple Choice',       detail: 'Test-style, four options per item' },
 ];
+
+const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
 // ── Default form state ────────────────────────────────────────────────────────
 
@@ -97,21 +69,164 @@ function defaultRequest(): WorksheetRequest {
   };
 }
 
+// ── Worksheet display ─────────────────────────────────────────────────────────
+
+function WorksheetDisplay({
+  result,
+  onReset,
+}: {
+  result: WorksheetResponse;
+  onReset: () => void;
+}) {
+  const [showAnswers, setShowAnswers] = useState(false);
+  const hasAnswers = result.items.some(i => i.answer !== null);
+  const isMultipleChoice = result.request_echo.category === 'multiple-choice';
+  const isReadingComp = result.request_echo.category === 'reading-comprehension';
+  const isShortAnswer = result.request_echo.category === 'short-answer';
+
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="font-display text-display-md text-ink rule-ornament">
+          Your worksheet
+        </h2>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            Print
+          </Button>
+          <Button variant="outline" size="sm" onClick={onReset}>
+            Start over
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-paper border border-rule rounded-lg shadow-card p-8 space-y-6">
+
+        {/* Title + name / date */}
+        <div className="text-center border-b border-rule pb-5">
+          <h3 className="font-display text-2xl text-ink">{result.title}</h3>
+          <div className="flex justify-between mt-5 font-sans text-sm text-ink-soft">
+            <span className="flex items-end gap-1.5">
+              Name:
+              <span className="inline-block w-48 border-b border-ink/40">&nbsp;</span>
+            </span>
+            <span className="flex items-end gap-1.5">
+              Date:
+              <span className="inline-block w-28 border-b border-ink/40">&nbsp;</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Instructions / passage */}
+        {result.instructions && (
+          <div
+            className={cn(
+              'font-sans text-sm text-ink leading-relaxed',
+              isReadingComp && 'bg-rule/30 rounded-md p-4 border border-rule/60',
+            )}
+          >
+            {isReadingComp && (
+              <p className="font-semibold text-ink mb-3">
+                Read the passage, then answer the questions below.
+              </p>
+            )}
+            <p className="whitespace-pre-wrap">{result.instructions}</p>
+          </div>
+        )}
+
+        {/* Items */}
+        <ol className="space-y-6">
+          {result.items.map((item, i) => (
+            <li key={i} className="font-sans text-sm text-ink">
+              <div className="flex gap-3">
+                <span className="font-semibold shrink-0 w-5 text-right pt-px">{i + 1}.</span>
+                <div className="flex-1 space-y-2">
+                  <p className="leading-relaxed whitespace-pre-wrap">{item.prompt}</p>
+
+                  {isMultipleChoice && item.options && (
+                    <ul className="space-y-2 mt-2">
+                      {item.options.slice(0, 4).map((opt, j) => (
+                        <li key={j} className="flex gap-2">
+                          <span className="font-semibold shrink-0 w-4">{OPTION_LABELS[j]}.</span>
+                          <span>{opt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {!isMultipleChoice && (
+                    <div className="mt-2 space-y-2.5 pt-1">
+                      <div className="border-b border-ink-faint/40" />
+                      {(isShortAnswer || isReadingComp) && (
+                        <>
+                          <div className="border-b border-ink-faint/40" />
+                          <div className="border-b border-ink-faint/40" />
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {/* Answer key */}
+        {hasAnswers && (
+          <div className="border-t border-rule pt-5">
+            <button
+              type="button"
+              onClick={() => setShowAnswers(s => !s)}
+              className="font-sans text-sm font-semibold text-terracotta hover:text-terracotta/80 transition-colors flex items-center gap-1.5"
+            >
+              Answer Key
+              <span className="text-xs">{showAnswers ? '▲' : '▼'}</span>
+            </button>
+
+            {showAnswers && (
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
+                {result.items.map((item, i) =>
+                  item.answer ? (
+                    <div key={i} className="font-sans text-sm text-ink flex gap-2">
+                      <span className="font-semibold shrink-0 w-5">{i + 1}.</span>
+                      <span className="text-ink-soft">{item.answer}</span>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function WorksheetsPage() {
   const [req, setReq] = useState<WorksheetRequest>(defaultRequest);
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [result, setResult] = useState<WorksheetResponse | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   function set<K extends keyof WorksheetRequest>(key: K, value: WorksheetRequest[K]) {
     setReq(prev => ({ ...prev, [key]: value }));
-    setSubmitted(false);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    console.log('[WorksheetRequest]', req);
-    setSubmitted(true);
+    setStatus('loading');
+    setResult(null);
+    setErrorMsg('');
+    try {
+      const worksheet = await generateWorksheet(req);
+      setResult(worksheet);
+      setStatus('success');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      setStatus('error');
+    }
   }
 
   const formValid = req.subject.trim().length > 0 && req.skill.trim().length > 0;
@@ -162,14 +277,22 @@ export default function WorksheetsPage() {
           Build your worksheet
         </h2>
 
+        {/* Error banner */}
+        {status === 'error' && (
+          <Card className="border-terracotta/40 bg-terracotta-soft/30 p-5 mb-8">
+            <CardHeader className="mb-0">
+              <CardTitle className="text-base text-ink">Generation failed</CardTitle>
+              <CardDescription className="text-ink-soft">{errorMsg}</CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-8">
 
           {/* Subject + grade band */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="font-sans text-sm font-semibold text-ink">
-                Subject
-              </label>
+              <label className="font-sans text-sm font-semibold text-ink">Subject</label>
               <Input
                 placeholder="e.g. Math, ELA, Science"
                 value={req.subject}
@@ -177,9 +300,7 @@ export default function WorksheetsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-sans text-sm font-semibold text-ink">
-                Grade band
-              </label>
+              <label className="font-sans text-sm font-semibold text-ink">Grade band</label>
               <Select
                 value={req.grade_band}
                 onChange={e => set('grade_band', e.target.value as GradeBand)}
@@ -193,9 +314,7 @@ export default function WorksheetsPage() {
 
           {/* Skill / topic */}
           <div className="space-y-1.5">
-            <label className="font-sans text-sm font-semibold text-ink">
-              Skill or topic
-            </label>
+            <label className="font-sans text-sm font-semibold text-ink">Skill or topic</label>
             <Input
               placeholder="e.g. two-digit multiplication, main idea vs. supporting detail"
               value={req.skill}
@@ -205,9 +324,7 @@ export default function WorksheetsPage() {
 
           {/* Category grid */}
           <div className="space-y-2">
-            <label className="font-sans text-sm font-semibold text-ink">
-              Worksheet type
-            </label>
+            <label className="font-sans text-sm font-semibold text-ink">Worksheet type</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {CATEGORIES.map(({ value, label, detail }) => {
                 const selected = req.category === value;
@@ -229,9 +346,7 @@ export default function WorksheetsPage() {
                     )}>
                       {label}
                     </p>
-                    <p className="font-sans text-xs text-ink-faint mt-1 leading-snug">
-                      {detail}
-                    </p>
+                    <p className="font-sans text-xs text-ink-faint mt-1 leading-snug">{detail}</p>
                   </button>
                 );
               })}
@@ -240,9 +355,7 @@ export default function WorksheetsPage() {
 
           {/* Tone toggle */}
           <div className="space-y-2">
-            <label className="font-sans text-sm font-semibold text-ink">
-              Tone
-            </label>
+            <label className="font-sans text-sm font-semibold text-ink">Tone</label>
             <div className="flex flex-wrap gap-2">
               {TONES.map(({ value, label }) => {
                 const selected = req.tone === value;
@@ -264,7 +377,6 @@ export default function WorksheetsPage() {
               })}
             </div>
 
-            {/* Theme field — only shown for engaging tone */}
             {req.tone === 'engaging' && (
               <div className="mt-3 space-y-1.5">
                 <label className="font-sans text-sm font-semibold text-ink">
@@ -291,7 +403,9 @@ export default function WorksheetsPage() {
                 min={5}
                 max={30}
                 value={req.item_count}
-                onChange={e => set('item_count', Math.min(30, Math.max(5, Number(e.target.value))))}
+                onChange={e =>
+                  set('item_count', Math.min(30, Math.max(5, Number(e.target.value))))
+                }
               />
             </div>
             <div className="flex items-end pb-0.5">
@@ -302,52 +416,44 @@ export default function WorksheetsPage() {
                   onChange={e => set('include_answer_key', e.target.checked)}
                   className="w-4 h-4 rounded border-rule accent-terracotta cursor-pointer"
                 />
-                <span className="font-sans text-sm font-semibold text-ink">
-                  Include answer key
-                </span>
+                <span className="font-sans text-sm font-semibold text-ink">Include answer key</span>
               </label>
             </div>
           </div>
 
           {/* Submit */}
           <div className="pt-2">
-            <Button
-              type="submit"
-              size="lg"
-              disabled={!formValid}
-            >
-              Generate worksheet
+            <Button type="submit" size="lg" disabled={!formValid || status === 'loading'}>
+              {status === 'loading' ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                status === 'success' ? 'Regenerate worksheet' : 'Generate worksheet'
+              )}
             </Button>
-            {!formValid && (
+            {!formValid && status !== 'loading' && (
               <p className="font-sans text-xs text-ink-faint mt-2">
                 Fill in subject and skill to continue.
               </p>
             )}
           </div>
 
-          {/* Confirmation — shown after submit */}
-          {submitted && (
-            <Card className="border-sage/40 bg-sage/5 p-5">
-              <CardHeader className="mb-0">
-                <CardTitle className="text-base text-ink">Request logged</CardTitle>
-                <CardDescription>
-                  Generation isn&rsquo;t wired up yet &mdash; check the browser console to see the{' '}
-                  <code className="font-mono text-xs bg-rule/60 px-1 py-0.5 rounded">
-                    WorksheetRequest
-                  </code>{' '}
-                  that would be sent to the Edge Function.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <pre className="mt-3 font-mono text-xs text-ink-soft bg-rule/40 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                  {JSON.stringify(req, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
-
         </form>
       </section>
+
+      {/* ── Result ── */}
+      {status === 'success' && result && (
+        <WorksheetDisplay
+          result={result}
+          onReset={() => {
+            setStatus('idle');
+            setResult(null);
+          }}
+        />
+      )}
+
     </div>
   );
 }
