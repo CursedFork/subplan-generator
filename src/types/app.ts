@@ -132,6 +132,44 @@ export interface AgentState {
   sub_plan_id: string | null;
 }
 
+// =====================================================================
+// Roster types — shared by Seating Chart and Group Mate tools
+// =====================================================================
+
+export interface Class {
+  id: string;
+  user_id: string;
+  name: string;
+  grade: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Known keys written by each tool. Both tools read the full attributes
+// object and ignore keys they don't own.
+export interface StudentAttributes {
+  // Seating Chart Maker
+  seating_preference?: 'front' | 'back' | 'window' | 'aisle' | null;
+  cannot_sit_near?: string[]; // student ids
+
+  // Group Mate Maker
+  reading_level?: string | null;
+  group_leader?: boolean;
+  iep?: boolean;
+  notes?: string | null;
+
+  // Open for future tools — don't narrow with never.
+  [key: string]: unknown;
+}
+
+export interface Student {
+  id: string;
+  class_id: string;
+  name: string;
+  attributes: StudentAttributes;
+  created_at: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;

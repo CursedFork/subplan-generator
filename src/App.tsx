@@ -20,6 +20,10 @@ import Profile from '@/pages/Profile';
 import Templates from '@/pages/Templates';
 import Admin from '@/pages/Admin';
 import { AdminRoute } from '@/components/AdminRoute';
+import ToolsIndex from '@/pages/tools/ToolsIndex';
+import WorksheetsPage from '@/pages/tools/Worksheets';
+import SeatingChartPage from '@/pages/tools/SeatingChart';
+import GroupsPage from '@/pages/tools/Groups';
 import NotFound from '@/pages/NotFound';
 import ProfileSetup from '@/pages/onboarding/ProfileSetup';
 
@@ -179,6 +183,55 @@ export default function App() {
             <ErrorBoundary>
               <ProtectedRoute>
                 <NewPlan />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/tools"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <ToolsIndex />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/tools/worksheets"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <WorksheetsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/tools/seating-chart"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <SeatingChartPage />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/tools/groups"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <GroupsPage />
+                </AppLayout>
               </ProtectedRoute>
             </ErrorBoundary>
           }

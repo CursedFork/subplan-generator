@@ -12,6 +12,7 @@ interface Props {
 
 const NAV_LINKS = [
   { to: '/plans',     label: 'Plans'     },
+  { to: '/tools',     label: 'Tools'     },
   { to: '/templates', label: 'Templates' },
   { to: '/profile',   label: 'Profile'   },
 ];
