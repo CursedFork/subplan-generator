@@ -100,7 +100,7 @@ function WorksheetDisplay({
         </div>
       </div>
 
-      <div className="bg-paper border border-rule rounded-lg shadow-card p-8 space-y-6">
+      <div className="worksheet-print-target bg-paper border border-rule rounded-lg shadow-card p-8 space-y-6">
 
         {/* Title + name / date */}
         <div className="text-center border-b border-rule pb-5">

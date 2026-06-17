@@ -63,6 +63,21 @@
 
   @media print {
     body { @apply bg-white text-black; }
+
+    /* Isolate the worksheet card — hide everything else */
+    body * { visibility: hidden; }
+    .worksheet-print-target,
+    .worksheet-print-target * { visibility: visible; }
+    .worksheet-print-target {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
   }
 }
 
