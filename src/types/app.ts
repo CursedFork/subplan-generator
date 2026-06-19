@@ -149,8 +149,17 @@ export interface Class {
 // object and ignore keys they don't own.
 export interface StudentAttributes {
   // Seating Chart Maker
-  seating_preference?: 'front' | 'back' | 'window' | 'aisle' | null;
-  cannot_sit_near?: string[]; // student ids
+  needs_front?: boolean;
+  avoid_door?: boolean;
+  avoid_window?: boolean;
+  avoid_high_traffic?: boolean;
+  preferred_side?: 'left' | 'right' | null;
+  fixed_seat?: { row: number; col: number } | null;
+  behavior_rating?: 1 | 2 | 3 | 4 | 5 | null;
+  focus_level?: 1 | 2 | 3 | 4 | 5 | null;
+  cannot_sit_near?: string[];
+  works_well_with?: string[];
+  iep_seating?: boolean;
 
   // Group Mate Maker
   reading_level?: string | null;
