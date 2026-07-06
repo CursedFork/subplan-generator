@@ -416,6 +416,35 @@ const MAX_TOOL_ROUNDS = 15;
 type MessageParam = Anthropic.Messages.MessageParam;
 type ToolResultBlockParam = Anthropic.Messages.ToolResultBlockParam;
 
+// ── Prompt caching ────────────────────────────────────────────────────
+// Repeated prefix tokens (system + tools + conversation history) bill at
+// 10% when served from cache. The 1h TTL covers teachers who pause
+// mid-conversation — classroom interruptions are the norm, not the edge case.
+const CACHE_1H = { type: 'ephemeral' as const, ttl: '1h' as const };
+
+// Returns a copy of messages with a cache breakpoint on the final content
+// block. The stored history must stay free of cache_control markers — the
+// API allows at most 4 per request, so persisted markers would accumulate
+// across turns and eventually 400 every request in the session.
+function withCacheBreakpoint(messages: MessageParam[]): MessageParam[] {
+  if (messages.length === 0) return messages;
+  const result = [...messages];
+  const last = result[result.length - 1];
+
+  if (typeof last.content === 'string') {
+    result[result.length - 1] = {
+      ...last,
+      content: [{ type: 'text', text: last.content, cache_control: CACHE_1H }],
+    };
+  } else if (Array.isArray(last.content) && last.content.length > 0) {
+    const blocks = [...last.content];
+    const lastBlock = blocks[blocks.length - 1] as Record<string, unknown>;
+    blocks[blocks.length - 1] = { ...lastBlock, cache_control: CACHE_1H } as typeof blocks[number];
+    result[result.length - 1] = { ...last, content: blocks };
+  }
+  return result;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -563,11 +592,20 @@ Deno.serve(async (req: Request) => {
     while (rounds < MAX_TOOL_ROUNDS) {
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        system: systemPrompt,
+        // Breakpoint on the system block caches tools + system together
+        // (render order is tools → system → messages).
+        system: [{ type: 'text', text: systemPrompt, cache_control: CACHE_1H }],
         tools: agentTools as unknown as Anthropic.Messages.Tool[],
-        messages,
+        messages: withCacheBreakpoint(messages),
         max_tokens: 4096,
       });
+
+      // Cache observability — visible in the Supabase function logs.
+      // cache_read_input_tokens > 0 on rounds after the first proves hits.
+      const u = response.usage;
+      console.log(
+        `[agent-turn] tokens in=${u.input_tokens} cache_write=${u.cache_creation_input_tokens ?? 0} cache_read=${u.cache_read_input_tokens ?? 0} out=${u.output_tokens}`,
+      );
 
       messages.push({ role: 'assistant', content: response.content });
 
