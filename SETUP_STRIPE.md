@@ -40,23 +40,21 @@ STRIPE_PRICE_PRO_MONTHLY=price_...
 STRIPE_PRICE_PRO_ANNUAL=price_...
 ```
 
-## 4. Run the migration and deploy functions (5 min)
+## 4. ~~Run the migration and deploy functions~~ — DONE (July 5, 2026)
+
+Already completed by Claude:
+- Migration history repaired (the four manually-run migrations marked applied)
+- `20260616000000_roster_schema.sql` and `20260705000000_free_tier_billing.sql`
+  pushed to production
+- All four edge functions deployed (agent-turn, create-checkout-session,
+  create-portal-session, stripe-webhook with --no-verify-jwt)
+
+Only redeploy stripe-webhook after you add the STRIPE_WEBHOOK_SECRET in step 5:
 
 ```powershell
 cd C:\Users\Andrew\subplan-generator
-npx supabase db push
-npx supabase functions deploy create-checkout-session
-npx supabase functions deploy create-portal-session
 npx supabase functions deploy stripe-webhook --no-verify-jwt
-npx supabase functions deploy agent-turn
 ```
-
-The `--no-verify-jwt` flag on stripe-webhook is required — Stripe can't send a Supabase
-JWT; the function verifies Stripe's signature instead.
-
-If `db push` complains, run the SQL directly:
-https://supabase.com/dashboard/project/mcvlnscbekyivvlnlisu/sql/new
-and paste `supabase/migrations/20260705000000_free_tier_billing.sql`.
 
 ## 5. Add the webhook endpoint (5 min)
 
