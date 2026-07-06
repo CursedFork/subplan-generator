@@ -1,414 +1,528 @@
-import { LayoutGrid, Printer, RotateCcw, UserCheck, Link2, XCircle, Eye, Volume2, Wind, Zap } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  LayoutGrid, Plus, Trash2, Eye, DoorOpen, Sun, Printer, RotateCcw,
+  AlertTriangle, XCircle, Link2, Ban,
+} from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ClassPicker } from '@/components/roster/ClassPicker';
+import {
+  useClasses, useStudents, useAddStudents, useUpdateStudent, useDeleteStudent,
+} from '@/hooks/useRoster';
+import { generateLayout } from '@/lib/seating/solver';
+import { printSeating } from '@/lib/seating/printSeating';
+import type { RoomConfig, SeatingLayout, StudentSeatingProfile, WallSide } from '@/lib/seating/types';
+import type { Student } from '@/types/app';
 
-// ─── Static room mockup ──────────────────────────────────────────────────────
+// ─── Room config (persisted per class in localStorage — no server table yet) ──
 
-interface DemoSeat {
-  row: number;
-  col: number;
-  initials?: string;
-  variant: 'empty' | 'normal' | 'front' | 'iep';
+interface StoredRoom {
+  rows: number;
+  cols: number;
+  doorWall: WallSide;
+  windowWalls: WallSide[];
 }
 
-const DEMO_SEATS: DemoSeat[] = [
-  // Row 0 — front (highlighted)
-  { row: 0, col: 0, initials: 'M', variant: 'iep' },
-  { row: 0, col: 1, initials: 'S', variant: 'front' },
-  { row: 0, col: 2, variant: 'front' },
-  { row: 0, col: 3, variant: 'front' },
-  { row: 0, col: 4, initials: 'T', variant: 'front' },
-  { row: 0, col: 5, variant: 'front' },
-  // Row 1
-  { row: 1, col: 0, initials: 'K', variant: 'normal' },
-  { row: 1, col: 1, variant: 'normal' },
-  { row: 1, col: 2, variant: 'normal' },
-  { row: 1, col: 3, variant: 'normal' },
-  { row: 1, col: 4, variant: 'normal' },
-  { row: 1, col: 5, initials: 'J', variant: 'normal' },
-  // Row 2
-  { row: 2, col: 0, variant: 'normal' },
-  { row: 2, col: 1, initials: 'A', variant: 'normal' },
-  { row: 2, col: 2, variant: 'normal' },
-  { row: 2, col: 3, variant: 'normal' },
-  { row: 2, col: 4, variant: 'normal' },
-  { row: 2, col: 5, variant: 'normal' },
-  // Row 3
-  { row: 3, col: 0, initials: 'B', variant: 'normal' },
-  { row: 3, col: 1, variant: 'normal' },
-  { row: 3, col: 2, variant: 'empty' },
-  { row: 3, col: 3, variant: 'empty' },
-  { row: 3, col: 4, variant: 'normal' },
-  { row: 3, col: 5, variant: 'normal' },
-];
+const DEFAULT_ROOM: StoredRoom = { rows: 4, cols: 6, doorWall: 'south', windowWalls: ['east'] };
+const roomKey = (classId: string) => `teacherspet-room-${classId}`;
 
-const SEAT_W = 44;
-const SEAT_H = 32;
-const H_GAP = 12;
-const V_GAP = 14;
-const GRID_LEFT = 100;
-const GRID_TOP = 72;
-const COLS = 6;
-
-function seatX(col: number) { return GRID_LEFT + col * (SEAT_W + H_GAP); }
-function seatY(row: number) { return GRID_TOP + row * (SEAT_H + V_GAP); }
-
-function RoomMockup() {
-  return (
-    <div className="w-full overflow-x-auto">
-      <svg
-        viewBox="0 0 560 310"
-        className="w-full max-w-[560px] mx-auto block"
-        aria-label="Static classroom grid mockup"
-        role="img"
-      >
-        <style>{`
-          .rm-board   { fill: var(--color-ink); }
-          .rm-tdesk   { fill: var(--color-rule); stroke: var(--color-ink-faint); stroke-width: 1; }
-          .rm-seat-n  { fill: var(--color-paper); stroke: var(--color-rule); stroke-width: 1.5; }
-          .rm-seat-f  { fill: var(--color-terracotta-soft); stroke: var(--color-terracotta); stroke-width: 1.5; }
-          .rm-seat-i  { fill: var(--color-terracotta); stroke: var(--color-terracotta); stroke-width: 1.5; }
-          .rm-seat-e  { fill: var(--color-paper); stroke: var(--color-rule); stroke-width: 1.5; stroke-dasharray: 4 3; opacity: 0.45; }
-          .rm-label   { font-family: var(--font-sans, sans-serif); font-size: 11px; fill: var(--color-ink-soft); }
-          .rm-badge   { font-family: var(--font-sans, sans-serif); font-size: 9px; font-weight: 700; fill: var(--color-paper); }
-          .rm-init-n  { font-family: var(--font-sans, sans-serif); font-size: 11px; font-weight: 600; fill: var(--color-ink); }
-          .rm-init-f  { font-family: var(--font-sans, sans-serif); font-size: 11px; font-weight: 600; fill: var(--color-terracotta); }
-          .rm-init-i  { font-family: var(--font-sans, sans-serif); font-size: 11px; font-weight: 700; fill: var(--color-paper); }
-          .rm-board-text { font-family: var(--font-sans, sans-serif); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; fill: var(--color-paper); }
-          .rm-feat    { font-family: var(--font-sans, sans-serif); font-size: 10px; fill: var(--color-ink-faint); }
-          .rm-win     { fill: none; stroke: var(--color-ink-faint); stroke-width: 2; }
-          .rm-door    { fill: var(--color-rule); stroke: var(--color-ink-faint); stroke-width: 1; }
-        `}</style>
-
-        {/* Board */}
-        <rect x={GRID_LEFT} y={18} width={COLS * (SEAT_W + H_GAP) - H_GAP} height={26} rx={3} className="rm-board" />
-        <text x={GRID_LEFT + (COLS * (SEAT_W + H_GAP) - H_GAP) / 2} y={35} textAnchor="middle" className="rm-board-text">
-          WHITEBOARD
-        </text>
-
-        {/* Teacher desk */}
-        <rect x={18} y={14} width={66} height={42} rx={4} className="rm-tdesk" />
-        <text x={51} y={34} textAnchor="middle" className="rm-label">Teacher</text>
-        <text x={51} y={47} textAnchor="middle" className="rm-label">Desk</text>
-
-        {/* Student seats */}
-        {DEMO_SEATS.map(({ row, col, initials, variant }) => {
-          const x = seatX(col);
-          const y = seatY(row);
-          const cx = x + SEAT_W / 2;
-          const cy = y + SEAT_H / 2;
-          const seatClass =
-            variant === 'iep' ? 'rm-seat-i' :
-            variant === 'front' ? 'rm-seat-f' :
-            variant === 'empty' ? 'rm-seat-e' :
-            'rm-seat-n';
-          const initClass =
-            variant === 'iep' ? 'rm-init-i' :
-            variant === 'front' ? 'rm-init-f' :
-            'rm-init-n';
-          return (
-            <g key={`${row}-${col}`}>
-              <rect x={x} y={y} width={SEAT_W} height={SEAT_H} rx={4} className={seatClass} />
-              {initials && (
-                <text x={cx} y={cy + 4} textAnchor="middle" className={initClass}>
-                  {initials}
-                </text>
-              )}
-            </g>
-          );
-        })}
-
-        {/* IEP badge on seat 0,0 */}
-        <rect x={seatX(0) + SEAT_W - 18} y={seatY(0) - 7} width={20} height={13} rx={3} className="rm-seat-i" />
-        <text x={seatX(0) + SEAT_W - 8} y={seatY(0) + 2} textAnchor="middle" className="rm-badge">IEP</text>
-
-        {/* Door — south wall, left side */}
-        <rect x={GRID_LEFT} y={seatY(3) + SEAT_H + 10} width={42} height={10} rx={2} className="rm-door" />
-        <text x={GRID_LEFT + 21} y={seatY(3) + SEAT_H + 28} textAnchor="middle" className="rm-feat">DOOR</text>
-
-        {/* Windows — east wall */}
-        {[0, 1, 2].map((i) => {
-          const wx = seatX(COLS - 1) + SEAT_W + 18;
-          const wy = seatY(0) + i * 60 + 10;
-          return (
-            <g key={i}>
-              <rect x={wx} y={wy} width={8} height={36} rx={2} className="rm-win" />
-            </g>
-          );
-        })}
-        <text
-          x={seatX(COLS - 1) + SEAT_W + 34}
-          y={seatY(1) + SEAT_H / 2 + 4}
-          textAnchor="middle"
-          transform={`rotate(90, ${seatX(COLS - 1) + SEAT_W + 34}, ${seatY(1) + SEAT_H / 2 + 4})`}
-          className="rm-feat"
-        >
-          WINDOWS
-        </text>
-
-        {/* Row label: FRONT */}
-        <text x={GRID_LEFT - 6} y={seatY(0) + SEAT_H / 2 + 4} textAnchor="end" className="rm-feat">
-          front
-        </text>
-      </svg>
-
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 px-2">
-        {[
-          { color: 'bg-terracotta text-paper', label: 'IEP / 504 mandate (hard front)' },
-          { color: 'bg-terracotta-soft border border-terracotta', label: 'Needs-front preference' },
-          { color: 'bg-paper border border-rule', label: 'Standard seat' },
-          { color: 'bg-paper border border-dashed border-rule opacity-50', label: 'No desk here' },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-1.5 text-xs font-sans text-ink-soft">
-            <span className={`inline-block w-4 h-3 rounded-sm shrink-0 ${color}`} />
-            {label}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function loadRoom(classId: string): StoredRoom {
+  try {
+    const raw = localStorage.getItem(roomKey(classId));
+    if (raw) return { ...DEFAULT_ROOM, ...(JSON.parse(raw) as StoredRoom) };
+  } catch { /* corrupted config falls back to default */ }
+  return DEFAULT_ROOM;
 }
 
-// ─── Attribute cards ─────────────────────────────────────────────────────────
+const WALL_LABELS: Record<WallSide, string> = {
+  north: 'Front (board)',
+  south: 'Back',
+  west: 'Left',
+  east: 'Right',
+};
 
-interface AttrCard {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  hardOrSoft: 'hard' | 'soft';
+// ─── Profile projection from StudentAttributes ───────────────────────
+
+function buildProfile(s: Student): StudentSeatingProfile {
+  const a = s.attributes;
+  return {
+    student_id: s.id,
+    name: s.name,
+    needs_front: a.needs_front === true,
+    avoid_door: a.avoid_door === true,
+    avoid_window: a.avoid_window === true,
+    avoid_high_traffic: a.avoid_high_traffic === true,
+    preferred_side: a.preferred_side === 'left' || a.preferred_side === 'right' ? a.preferred_side : null,
+    fixed_seat: a.fixed_seat && typeof a.fixed_seat === 'object' ? a.fixed_seat as { row: number; col: number } : null,
+    behavior_rating: typeof a.behavior_rating === 'number' ? a.behavior_rating as 1 | 2 | 3 | 4 | 5 : null,
+    focus_level: typeof a.focus_level === 'number' ? a.focus_level as 1 | 2 | 3 | 4 | 5 : null,
+    cannot_sit_near: Array.isArray(a.cannot_sit_near) ? a.cannot_sit_near.filter((x): x is string => typeof x === 'string') : [],
+    works_well_with: Array.isArray(a.works_well_with) ? a.works_well_with.filter((x): x is string => typeof x === 'string') : [],
+    iep_seating: a.iep_seating === true,
+  };
 }
 
-const ATTR_CARDS: AttrCard[] = [
-  {
-    icon: <UserCheck className="w-4 h-4" />,
-    title: 'IEP / 504 seating mandate',
-    description: 'Upgrades "needs front" from a preference to a hard constraint the solver cannot violate.',
-    hardOrSoft: 'hard',
-  },
-  {
-    icon: <Eye className="w-4 h-4" />,
-    title: 'Needs front row',
-    description: 'Vision or hearing accommodation. Hard when IEP flag is set; soft preference otherwise.',
-    hardOrSoft: 'soft',
-  },
-  {
-    icon: <XCircle className="w-4 h-4" />,
-    title: 'Cannot sit near',
-    description: 'One or more students who must not be adjacent or close. Conflict pairs — the solver enforces all of them.',
-    hardOrSoft: 'hard',
-  },
-  {
-    icon: <Link2 className="w-4 h-4" />,
-    title: 'Works well with',
-    description: 'Students who benefit from proximity. Soft preference — solver places them adjacent when possible.',
-    hardOrSoft: 'soft',
-  },
-  {
-    icon: <Wind className="w-4 h-4" />,
-    title: 'Avoid door / window / traffic',
-    description: 'Keep this student away from the exit, windows, or busy spots like the pencil sharpener.',
-    hardOrSoft: 'soft',
-  },
-  {
-    icon: <Zap className="w-4 h-4" />,
-    title: 'Focus & behavior rating',
-    description: 'Two separate 1–5 scales. Solver scatters low-focus and high-challenge students across the room.',
-    hardOrSoft: 'soft',
-  },
-  {
-    icon: <Volume2 className="w-4 h-4" />,
-    title: 'Fixed seat override',
-    description: 'Pin a student to an exact grid position. Solver places them first and works around it.',
-    hardOrSoft: 'hard',
-  },
-  {
-    icon: <UserCheck className="w-4 h-4" />,
-    title: 'Preferred side',
-    description: 'Left or right — for left-handed students who need an aisle seat on the correct side.',
-    hardOrSoft: 'soft',
-  },
-];
-
-// ─── How it works steps ───────────────────────────────────────────────────────
-
-const STEPS = [
-  {
-    number: '1',
-    title: 'Configure your room',
-    body: 'Enter dimensions (rows × cols of desks), mark which wall has the board, and note the door and window positions.',
-  },
-  {
-    number: '2',
-    title: 'Build your roster',
-    body: 'Add students and tag their preferences — IEP mandate, cannot-sit-near pairs, focus level, or a fixed seat.',
-  },
-  {
-    number: '3',
-    title: 'Generate and print',
-    body: 'One click produces an optimized layout. Regenerate any time — for new terms, new constraints, or just to try a fresh arrangement.',
-  },
-];
-
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────
 
 export default function SeatingChartPage() {
-  return (
-    <div className="space-y-10 max-w-3xl">
+  const { data: classes, isLoading: classesLoading } = useClasses();
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const activeClassId = selectedClassId ?? classes?.[0]?.id ?? null;
+  const activeClass = classes?.find((c) => c.id === activeClassId) ?? null;
+  const { data: students } = useStudents(activeClassId);
 
+  const [room, setRoom] = useState<StoredRoom>(DEFAULT_ROOM);
+  const [layout, setLayout] = useState<SeatingLayout | null>(null);
+
+  useEffect(() => {
+    if (activeClassId) {
+      setRoom(loadRoom(activeClassId));
+      setLayout(null);
+    }
+  }, [activeClassId]);
+
+  function updateRoom(patch: Partial<StoredRoom>) {
+    setRoom((prev) => {
+      const next = { ...prev, ...patch };
+      if (activeClassId) localStorage.setItem(roomKey(activeClassId), JSON.stringify(next));
+      return next;
+    });
+  }
+
+  const roomConfig: RoomConfig | null = activeClassId ? {
+    id: activeClassId,
+    name: activeClass?.name ?? 'Room',
+    rows: room.rows,
+    cols: room.cols,
+    front_wall: 'north',
+    door: { wall: room.doorWall },
+    windows: room.windowWalls.map((wall) => ({ wall })),
+    high_traffic_spots: [],
+    teacher_desk: null,
+    enabled_seats: [],
+  } : null;
+
+  function handleGenerate() {
+    if (!roomConfig || !students) return;
+    setLayout(generateLayout(roomConfig, students.map(buildProfile)));
+  }
+
+  return (
+    <div className="space-y-10 max-w-4xl">
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-4">
           <div className="p-3 rounded-md bg-terracotta-soft text-terracotta shrink-0">
             <LayoutGrid className="w-6 h-6" strokeWidth={1.75} />
           </div>
-          <span className="text-xs font-sans font-semibold text-ink-faint bg-rule/60 px-2.5 py-1 rounded-full">
-            Coming soon
+          <span className="text-xs font-sans font-semibold text-sage bg-sage/10 px-2.5 py-1 rounded-full">
+            Active
           </span>
         </div>
         <h1 className="font-display text-display-lg text-ink">Seating Chart Maker</h1>
         <p className="font-sans text-base text-ink-soft mt-3 max-w-2xl leading-relaxed">
-          Describe your room once — dimensions, door, windows, features — then track per-student
-          constraints like IEP mandates, cannot-sit-near pairs, and focus levels. The tool
-          generates an optimized layout in one click and flags any conflicts it can't resolve.
-          Regenerate any time: new term, new constraints, or just a fresh start.
+          Describe your room, tag student needs, and generate a seating chart in one click.
+          IEP front-row placements are always honored; conflicts are flagged, never hidden.
+          Same roster as the Group Mate Maker.
         </p>
       </div>
 
-      {/* Room mockup */}
-      <Card>
-        <h2 className="font-display text-display-md text-ink mb-1 rule-ornament">
-          Your classroom as a grid
-        </h2>
-        <p className="font-sans text-sm text-ink-soft mt-4 mb-6 leading-relaxed">
-          Row 0 is the front (nearest the board). Column 0 is left when facing the board.
-          Door and window positions are marked on the walls — the solver uses these to
-          apply avoid-door and avoid-window constraints.
-        </p>
-        <RoomMockup />
-      </Card>
+      <ClassPicker
+        classes={classes ?? []}
+        loading={classesLoading}
+        activeClassId={activeClassId}
+        onSelect={(id) => setSelectedClassId(id)}
+      />
 
-      {/* How it works */}
-      <div>
-        <h2 className="font-display text-display-md text-ink rule-ornament mb-6">How it works</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {STEPS.map(({ number, title, body }) => (
-            <div key={number} className="rounded-md border border-rule bg-paper shadow-card p-6 theme-aware">
-              <div className="w-7 h-7 rounded-full bg-terracotta-soft text-terracotta flex items-center justify-center font-display font-semibold text-sm mb-4">
-                {number}
-              </div>
-              <h3 className="font-display text-display-sm text-ink mb-2">{title}</h3>
-              <p className="font-sans text-sm text-ink-soft leading-relaxed">{body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      {activeClassId && (
+        <>
+          <SeatingRoster classId={activeClassId} students={students ?? []} />
+          <PairEditor classId={activeClassId} students={students ?? []} />
 
-      {/* Per-student attributes */}
-      <Card>
-        <h2 className="font-display text-display-md text-ink mb-1 rule-ornament">
-          What you track per student
-        </h2>
-        <p className="font-sans text-sm text-ink-soft mt-4 mb-6 leading-relaxed">
-          Each attribute is stored on the student record and carries into both the Seating Chart
-          and the Group Mate Maker. Add what you know — unset attributes are simply ignored.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {ATTR_CARDS.map(({ icon, title, description, hardOrSoft }) => (
-            <div key={title} className="flex gap-3 p-4 rounded-md border border-rule bg-paper theme-aware">
-              <div className="p-1.5 rounded bg-terracotta-soft text-terracotta shrink-0 self-start">
-                {icon}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-sans text-sm font-semibold text-ink">{title}</span>
-                  <span className={[
-                    'text-[10px] font-sans font-bold px-1.5 py-0.5 rounded-full',
-                    hardOrSoft === 'hard'
-                      ? 'bg-ink text-paper'
-                      : 'bg-rule/60 text-ink-soft',
-                  ].join(' ')}>
-                    {hardOrSoft === 'hard' ? 'hard' : 'soft'}
-                  </span>
+          {/* Room config */}
+          <Card>
+            <h2 className="font-display text-display-md text-ink mb-5 rule-ornament">Your room</h2>
+            <div className="flex flex-wrap gap-8">
+              {([['rows', 'Rows of desks'], ['cols', 'Desks per row']] as const).map(([key, label]) => (
+                <div key={key}>
+                  <p className="font-sans text-sm font-semibold text-ink mb-2">{label}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateRoom({ [key]: Math.max(2, room[key] - 1) } as Partial<StoredRoom>)}
+                      className="w-7 h-7 rounded border border-rule bg-paper text-ink-soft hover:text-ink font-sans text-sm flex items-center justify-center"
+                    >−</button>
+                    <span className="font-display text-display-md text-ink w-6 text-center">{room[key]}</span>
+                    <button
+                      onClick={() => updateRoom({ [key]: Math.min(10, room[key] + 1) } as Partial<StoredRoom>)}
+                      className="w-7 h-7 rounded border border-rule bg-paper text-ink-soft hover:text-ink font-sans text-sm flex items-center justify-center"
+                    >+</button>
+                  </div>
                 </div>
-                <p className="font-sans text-xs text-ink-soft leading-relaxed">{description}</p>
+              ))}
+
+              <div>
+                <p className="font-sans text-sm font-semibold text-ink mb-2">Door is at the…</p>
+                <select
+                  value={room.doorWall}
+                  onChange={(e) => updateRoom({ doorWall: e.target.value as WallSide })}
+                  className="rounded-md border border-rule bg-paper px-3 py-2 font-sans text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta/40 theme-aware"
+                >
+                  {(Object.keys(WALL_LABELS) as WallSide[]).map((w) => (
+                    <option key={w} value={w}>{WALL_LABELS[w]}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <p className="font-sans text-sm font-semibold text-ink mb-2">Windows on the…</p>
+                <div className="flex gap-2">
+                  {(Object.keys(WALL_LABELS) as WallSide[]).map((w) => {
+                    const on = room.windowWalls.includes(w);
+                    return (
+                      <button
+                        key={w}
+                        onClick={() => updateRoom({
+                          windowWalls: on
+                            ? room.windowWalls.filter((x) => x !== w)
+                            : [...room.windowWalls, w],
+                        })}
+                        className={[
+                          'px-3 py-1.5 rounded-md border text-xs font-sans font-medium transition-colors duration-150',
+                          on
+                            ? 'bg-terracotta text-paper border-terracotta'
+                            : 'bg-paper text-ink-soft border-rule hover:border-ink-faint',
+                        ].join(' ')}
+                      >
+                        {WALL_LABELS[w].split(' ')[0]}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-        <div className="mt-5 flex gap-4 text-xs font-sans text-ink-faint">
-          <span>
-            <strong className="font-semibold text-ink">hard</strong> — solver cannot violate this constraint
-          </span>
-          <span>
-            <strong className="font-semibold text-ink">soft</strong> — solver tries its best; warns when it can't
-          </span>
-        </div>
-      </Card>
 
-      {/* Room config */}
-      <Card>
-        <h2 className="font-display text-display-md text-ink mb-1 rule-ornament">
-          What you set up once per room
-        </h2>
-        <p className="font-sans text-sm text-ink-soft mt-4 mb-5 leading-relaxed">
-          Room config is shared across all arrangements for that room — change a detail once
-          and every future layout picks it up.
-        </p>
-        <ul className="space-y-3">
-          {[
-            ['Grid size', 'Rows × columns of desks — e.g. 4 rows × 6 columns.'],
-            ['Front wall', 'Which physical wall the board is on (north / south / east / west). Sets the orientation of the grid.'],
-            ['Door position', 'Which wall the main door is on. Used for avoid-door constraint scoring.'],
-            ['Windows', 'One or more walls with windows. Used for avoid-window scoring.'],
-            ['High-traffic spots', 'Specific desk positions near a pencil sharpener, cubby bank, or bathroom pass hook.'],
-            ['Teacher desk', 'Optional — mark its grid position if it sits within the student area.'],
-            ['Enabled seats', 'Leave blank for a full rectangle. Mark specific positions to remove if your room has an irregular shape.'],
-          ].map(([label, desc]) => (
-            <li key={label} className="flex gap-3 text-sm font-sans">
-              <span className="font-semibold text-ink shrink-0 w-36">{label}</span>
-              <span className="text-ink-soft">{desc}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
+            <div className="mt-7 flex items-center gap-4">
+              <Button size="lg" onClick={handleGenerate} disabled={(students ?? []).length < 1}>
+                {layout ? 'Regenerate chart' : 'Generate seating chart'}
+              </Button>
+              <span className="font-sans text-xs text-ink-faint">
+                {room.rows * room.cols} desks · {(students ?? []).length} students
+              </span>
+            </div>
+          </Card>
 
-      {/* Features list */}
-      <Card>
-        <h2 className="font-display text-display-md text-ink mb-2 rule-ornament">
-          What you get
-        </h2>
-        <ul className="mt-4 space-y-3 font-sans text-sm text-ink-soft">
-          {[
-            'Constraint violations flagged clearly — no silent failures.',
-            'Hard constraints always honored; soft constraints resolved with a transparent warning if they conflict.',
-            'Regenerate in one click — great for new semesters, behavior resets, or trying a new arrangement.',
-            [<Printer key="p" className="w-3.5 h-3.5 inline mb-0.5 mr-0.5" />, 'Print a clean chart to leave for a substitute.'],
-            [<RotateCcw key="r" className="w-3.5 h-3.5 inline mb-0.5 mr-0.5" />, 'Roster syncs automatically with the Group Mate Maker.'],
-          ].map((item, i) => (
-            <li key={i} className="flex items-start gap-2.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-terracotta mt-1.5 shrink-0" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
+          {layout && roomConfig && (
+            <ChartView
+              layout={layout}
+              room={roomConfig}
+              students={students ?? []}
+              className={activeClass?.name ?? 'Class'}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
-      {/* CTA */}
-      <div>
-        <div className="relative group inline-block">
-          <Button disabled size="lg">
-            Create a seating chart
-          </Button>
-          <div className="absolute left-1/2 -translate-x-1/2 -top-10 bg-ink text-paper text-xs px-2.5 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-            Coming soon
-          </div>
-        </div>
-        <p className="font-sans text-xs text-ink-faint mt-3">
-          This tool is in development. Check back soon.
-        </p>
+// ─── Roster with seating attributes ──────────────────────────────────
+
+function SeatingRoster({ classId, students }: { classId: string; students: Student[] }) {
+  const addStudents = useAddStudents();
+  const updateStudent = useUpdateStudent();
+  const deleteStudent = useDeleteStudent();
+  const [namesInput, setNamesInput] = useState('');
+
+  function handleAdd() {
+    const names = namesInput.split(/[\n,]/).map((n) => n.trim()).filter(Boolean);
+    if (names.length === 0) return;
+    addStudents.mutate({ classId, names }, { onSuccess: () => setNamesInput('') });
+  }
+
+  function toggle(s: Student, key: 'needs_front' | 'iep_seating' | 'avoid_door' | 'avoid_window') {
+    const attributes = { ...s.attributes, [key]: !s.attributes[key] };
+    // An IEP seating mandate implies a front-row requirement.
+    if (key === 'iep_seating' && attributes.iep_seating) attributes.needs_front = true;
+    updateStudent.mutate({ studentId: s.id, classId, attributes });
+  }
+
+  const toggleBtn = (active: boolean | unknown) =>
+    active === true ? 'text-terracotta' : 'text-ink-faint hover:text-ink';
+
+  return (
+    <Card>
+      <div className="flex items-baseline justify-between flex-wrap gap-2">
+        <h2 className="font-display text-display-md text-ink rule-ornament">Roster &amp; needs</h2>
+        <span className="font-sans text-sm text-ink-faint">{students.length} students</span>
       </div>
 
-    </div>
+      <div className="flex items-start gap-2 mt-5">
+        <textarea
+          value={namesInput}
+          onChange={(e) => setNamesInput(e.target.value)}
+          placeholder={'Add students — one per line or comma-separated.'}
+          rows={2}
+          className="flex-1 rounded-md border border-rule bg-paper px-3 py-2 font-sans text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-terracotta/40 theme-aware resize-y"
+        />
+        <Button variant="outline" onClick={handleAdd} disabled={!namesInput.trim() || addStudents.isPending}>
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          Add
+        </Button>
+      </div>
+
+      {students.length > 0 && (
+        <>
+          <div className="flex gap-5 mt-5 mb-2 font-sans text-xs text-ink-faint flex-wrap">
+            <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> needs front</span>
+            <span>IEP = front row required</span>
+            <span className="flex items-center gap-1"><DoorOpen className="w-3 h-3" /> keep from door</span>
+            <span className="flex items-center gap-1"><Sun className="w-3 h-3" /> keep from windows</span>
+          </div>
+          <div className="divide-y divide-rule border border-rule rounded-md overflow-hidden">
+            {students.map((s) => (
+              <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 bg-paper theme-aware">
+                <span className="flex-1 font-sans text-sm text-ink">{s.name}</span>
+
+                <button onClick={() => toggle(s, 'needs_front')} title="Needs front row (vision/hearing)"
+                  className={toggleBtn(s.attributes.needs_front)}>
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => toggle(s, 'iep_seating')}
+                  title="IEP/504 seating mandate — front row becomes a hard requirement"
+                  className={[
+                    'text-[10px] font-sans font-bold px-1.5 py-0.5 rounded-full border transition-colors',
+                    s.attributes.iep_seating
+                      ? 'bg-ink text-paper border-ink'
+                      : 'bg-paper text-ink-faint border-rule hover:text-ink',
+                  ].join(' ')}
+                >
+                  IEP
+                </button>
+                <button onClick={() => toggle(s, 'avoid_door')} title="Keep away from the door"
+                  className={toggleBtn(s.attributes.avoid_door)}>
+                  <DoorOpen className="w-4 h-4" />
+                </button>
+                <button onClick={() => toggle(s, 'avoid_window')} title="Keep away from windows"
+                  className={toggleBtn(s.attributes.avoid_window)}>
+                  <Sun className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => deleteStudent.mutate({ studentId: s.id, classId })}
+                  title="Remove student"
+                  className="text-ink-faint hover:text-terracotta transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
+// ─── Pair editor (keep apart / works well with) ──────────────────────
+
+function PairEditor({ classId, students }: { classId: string; students: Student[] }) {
+  const updateStudent = useUpdateStudent();
+  const [aId, setAId] = useState('');
+  const [bId, setBId] = useState('');
+  const [kind, setKind] = useState<'cannot_sit_near' | 'works_well_with'>('cannot_sit_near');
+
+  const nameOf = useMemo(() => new Map(students.map((s) => [s.id, s.name])), [students]);
+
+  // Derive the deduped pair list from student attributes (either direction).
+  const pairs = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { a: string; b: string; kind: 'cannot_sit_near' | 'works_well_with' }[] = [];
+    for (const s of students) {
+      for (const key of ['cannot_sit_near', 'works_well_with'] as const) {
+        const arr = s.attributes[key];
+        if (!Array.isArray(arr)) continue;
+        for (const t of arr) {
+          if (typeof t !== 'string' || !nameOf.has(t)) continue;
+          const pk = `${key}:${[s.id, t].sort().join('|')}`;
+          if (seen.has(pk)) continue;
+          seen.add(pk);
+          list.push({ a: s.id, b: t, kind: key });
+        }
+      }
+    }
+    return list;
+  }, [students, nameOf]);
+
+  function addPair() {
+    if (!aId || !bId || aId === bId) return;
+    const student = students.find((s) => s.id === aId)!;
+    const existing = Array.isArray(student.attributes[kind])
+      ? (student.attributes[kind] as string[])
+      : [];
+    if (!existing.includes(bId)) {
+      updateStudent.mutate({
+        studentId: aId,
+        classId,
+        attributes: { ...student.attributes, [kind]: [...existing, bId] },
+      });
+    }
+    setAId('');
+    setBId('');
+  }
+
+  function removePair(pair: { a: string; b: string; kind: 'cannot_sit_near' | 'works_well_with' }) {
+    // The pair may be stored on either student — clean both directions.
+    for (const [sid, other] of [[pair.a, pair.b], [pair.b, pair.a]] as const) {
+      const s = students.find((x) => x.id === sid);
+      if (!s) continue;
+      const arr = s.attributes[pair.kind];
+      if (Array.isArray(arr) && arr.includes(other)) {
+        updateStudent.mutate({
+          studentId: sid,
+          classId,
+          attributes: { ...s.attributes, [pair.kind]: arr.filter((x) => x !== other) },
+        });
+      }
+    }
+  }
+
+  const selectCls = 'rounded-md border border-rule bg-paper px-3 py-2 font-sans text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta/40 theme-aware';
+
+  return (
+    <Card>
+      <h2 className="font-display text-display-md text-ink mb-2 rule-ornament">Pairs</h2>
+      <p className="font-sans text-sm text-ink-soft mt-3 mb-5">
+        Mark who shouldn&rsquo;t sit together and who works well side by side. These pairs are
+        shared with the Group Mate Maker.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={aId} onChange={(e) => setAId(e.target.value)} className={selectCls}>
+          <option value="">Student…</option>
+          {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className={selectCls}>
+          <option value="cannot_sit_near">must be kept apart from</option>
+          <option value="works_well_with">works well with</option>
+        </select>
+        <select value={bId} onChange={(e) => setBId(e.target.value)} className={selectCls}>
+          <option value="">Student…</option>
+          {students.filter((s) => s.id !== aId).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <Button size="sm" variant="outline" onClick={addPair} disabled={!aId || !bId}>
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          Add pair
+        </Button>
+      </div>
+
+      {pairs.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-5">
+          {pairs.map((p) => (
+            <span
+              key={`${p.kind}:${p.a}:${p.b}`}
+              className={[
+                'inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full border font-sans text-xs',
+                p.kind === 'cannot_sit_near'
+                  ? 'border-terracotta/40 bg-terracotta-soft text-ink'
+                  : 'border-sage/40 bg-sage/10 text-ink',
+              ].join(' ')}
+            >
+              {p.kind === 'cannot_sit_near'
+                ? <Ban className="w-3 h-3 text-terracotta" />
+                : <Link2 className="w-3 h-3 text-sage" />}
+              {nameOf.get(p.a)} &amp; {nameOf.get(p.b)}
+              <button
+                onClick={() => removePair(p)}
+                className="text-ink-faint hover:text-terracotta ml-0.5"
+                aria-label="Remove pair"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── Chart display ───────────────────────────────────────────────────
+
+function ChartView({
+  layout, room, students, className,
+}: {
+  layout: SeatingLayout;
+  room: RoomConfig;
+  students: Student[];
+  className: string;
+}) {
+  const nameOf = useMemo(() => new Map(students.map((s) => [s.id, s.name])), [students]);
+  const byPos = useMemo(
+    () => new Map(layout.assignments.map((a) => [`${a.row},${a.col}`, a.student_id])),
+    [layout],
+  );
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+        <h2 className="font-display text-display-md text-ink rule-ornament">Your chart</h2>
+        <Button variant="outline" size="sm" onClick={() => printSeating(className, room, layout, nameOf)}>
+          <Printer className="w-3.5 h-3.5 mr-1.5" />
+          Print / PDF
+        </Button>
+      </div>
+
+      {layout.constraint_violations.length > 0 && (
+        <div className="flex items-start gap-3 p-3.5 rounded-md border border-terracotta bg-terracotta-soft mb-4 theme-aware">
+          <XCircle className="w-4 h-4 text-terracotta shrink-0 mt-0.5" />
+          <ul className="font-sans text-sm text-ink space-y-1">
+            {layout.constraint_violations.map((v, i) => <li key={i}>{v.reason}</li>)}
+          </ul>
+        </div>
+      )}
+      {layout.warnings.length > 0 && (
+        <div className="flex items-start gap-3 p-3.5 rounded-md border border-rule bg-rule/20 mb-4 theme-aware">
+          <AlertTriangle className="w-4 h-4 text-ink-faint shrink-0 mt-0.5" />
+          <ul className="font-sans text-sm text-ink-soft space-y-1">
+            {layout.warnings.map((w, i) => <li key={i}>{w}</li>)}
+          </ul>
+        </div>
+      )}
+
+      <p className="text-center font-sans text-[11px] uppercase tracking-widest text-ink-faint mb-3">
+        ▲ Front of room (board)
+      </p>
+      <div className="overflow-x-auto">
+        <div
+          className="grid gap-2 mx-auto w-fit"
+          style={{ gridTemplateColumns: `repeat(${room.cols}, minmax(72px, 96px))` }}
+        >
+          {Array.from({ length: room.rows * room.cols }, (_, i) => {
+            const row = Math.floor(i / room.cols);
+            const col = i % room.cols;
+            const sid = byPos.get(`${row},${col}`);
+            return (
+              <div
+                key={i}
+                className={[
+                  'h-12 rounded-md border flex items-center justify-center px-1 font-sans text-xs text-center',
+                  sid
+                    ? 'border-rule bg-paper text-ink shadow-card theme-aware'
+                    : 'border-dashed border-rule/70 text-ink-faint/40',
+                ].join(' ')}
+              >
+                <span className="truncate">{sid ? nameOf.get(sid) : ''}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="font-sans text-xs text-ink-faint mt-5 flex items-center gap-1.5">
+        <RotateCcw className="w-3 h-3" />
+        Regenerate as often as you like — pinned and IEP placements stay put.
+      </p>
+    </Card>
   );
 }

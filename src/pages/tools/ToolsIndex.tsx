@@ -36,7 +36,7 @@ const TOOLS: ToolDef[] = [
     description:
       'Build and manage classroom seating arrangements. Flag accommodations, set "cannot sit near" constraints, and rearrange with ease.',
     href: '/tools/seating-chart',
-    status: 'coming-soon',
+    status: 'active',
   },
   {
     icon: Users,
