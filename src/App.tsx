@@ -17,6 +17,7 @@ import Dashboard from '@/pages/Dashboard';
 import Plans from '@/pages/Plans';
 import NewPlan from '@/pages/NewPlan';
 import Profile from '@/pages/Profile';
+import Billing from '@/pages/Billing';
 import Templates from '@/pages/Templates';
 import Admin from '@/pages/Admin';
 import { AdminRoute } from '@/components/AdminRoute';
@@ -26,6 +27,8 @@ import SeatingChartPage from '@/pages/tools/SeatingChart';
 import GroupsPage from '@/pages/tools/Groups';
 import NotFound from '@/pages/NotFound';
 import ProfileSetup from '@/pages/onboarding/ProfileSetup';
+import Terms from '@/pages/legal/Terms';
+import Privacy from '@/pages/legal/Privacy';
 
 // RootRedirect is no longer needed — / is now the public landing page.
 // Kept for potential internal use if needed.
@@ -46,8 +49,8 @@ export default function App() {
         />
 
         {/* Footer legal/info pages */}
-        <Route path="/terms" element={<Placeholder title="Terms of Service" />} />
-        <Route path="/privacy" element={<Placeholder title="Privacy Policy" />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Placeholder title="Contact" />} />
 
         <Route
@@ -145,6 +148,19 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <Profile />
+                </AppLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/billing"
+          element={
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <AppLayout>
+                  <Billing />
                 </AppLayout>
               </ProtectedRoute>
             </ErrorBoundary>

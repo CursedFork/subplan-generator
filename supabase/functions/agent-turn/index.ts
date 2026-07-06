@@ -331,11 +331,16 @@ async function handleTool(
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       );
       const { data: usageRows } = await adminClient.rpc('increment_plan_usage', { p_user_id: userId });
-      const usage = Array.isArray(usageRows) ? (usageRows[0] as { allowed: boolean; cap: number } | undefined) : null;
-      // cap === 0 means no subscription exists (pre-Stripe) — allow through.
-      if (usage && !usage.allowed && usage.cap > 0) {
+      const usage = Array.isArray(usageRows)
+        ? (usageRows[0] as { allowed: boolean; new_count: number; cap: number; tier: string | null } | undefined)
+        : null;
+      if (usage && !usage.allowed) {
+        // tier null = free tier (3 lifetime plans); otherwise a paid period cap.
+        const message = usage.tier === null
+          ? 'You have used all 3 free plans. Tell the teacher to visit the Billing page to subscribe and keep creating plans.'
+          : 'Plan limit reached for this billing period. Tell the teacher to visit the Billing page to upgrade.';
         return {
-          result: JSON.stringify({ ok: false, error: 'Monthly plan limit reached. Upgrade your plan to create more.' }),
+          result: JSON.stringify({ ok: false, error: message }),
           newState: state,
         };
       }

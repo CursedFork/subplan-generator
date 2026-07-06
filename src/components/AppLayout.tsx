@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { to: '/tools',     label: 'Tools'     },
   { to: '/templates', label: 'Templates' },
   { to: '/profile',   label: 'Profile'   },
+  { to: '/billing',   label: 'Billing'   },
 ];
 
 export function AppLayout({ children }: Props) {

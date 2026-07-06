@@ -43,6 +43,11 @@ enable_confirmations = true
 enable_signup = false
 enable_confirmations = false
 
+# Stripe calls this endpoint directly — it cannot send a Supabase JWT.
+# Security is the webhook signature check inside the function.
+[functions.stripe-webhook]
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327
