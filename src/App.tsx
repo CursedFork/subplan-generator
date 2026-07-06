@@ -6,7 +6,6 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PublicOnlyRoute } from '@/components/PublicOnlyRoute';
 import { AppLayout } from '@/components/AppLayout';
 import Landing from '@/pages/Landing';
-import Placeholder from '@/pages/Placeholder';
 import SignIn from '@/pages/auth/SignIn';
 import SignUp from '@/pages/auth/SignUp';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
@@ -29,6 +28,7 @@ import NotFound from '@/pages/NotFound';
 import ProfileSetup from '@/pages/onboarding/ProfileSetup';
 import Terms from '@/pages/legal/Terms';
 import Privacy from '@/pages/legal/Privacy';
+import Contact from '@/pages/legal/Contact';
 
 // RootRedirect is no longer needed — / is now the public landing page.
 // Kept for potential internal use if needed.
@@ -51,7 +51,7 @@ export default function App() {
         {/* Footer legal/info pages */}
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="/contact" element={<Placeholder title="Contact" />} />
+        <Route path="/contact" element={<Contact />} />
 
         <Route
           path="/signin"

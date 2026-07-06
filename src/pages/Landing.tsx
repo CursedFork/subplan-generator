@@ -203,6 +203,9 @@ export default function Landing() {
       <section id="pricing" className="border-t border-rule py-20">
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="font-display text-display-lg text-ink text-center mb-4">Pricing</h2>
+          <p className="text-center font-sans text-base text-ink-soft mb-8">
+            Every account starts with <strong className="text-ink font-semibold">3 free plans</strong> — no card required.
+          </p>
           <div className="flex items-center justify-center gap-3 mb-12">
             <span className={'font-sans text-sm ' + (!annual ? 'text-ink' : 'text-ink-faint')}>Monthly</span>
             <button

@@ -4,7 +4,7 @@ import { Logo } from '@/components/logo/Logo';
 
 interface Props {
   title: string;
-  effectiveDate: string;
+  effectiveDate?: string;
   children: ReactNode;
 }
 
@@ -25,9 +25,13 @@ export function LegalPage({ title, effectiveDate, children }: Props) {
 
       <main className="max-w-3xl mx-auto px-6 py-14">
         <h1 className="font-display text-display-lg text-ink rule-ornament">{title}</h1>
-        <p className="font-sans text-sm text-ink-faint mt-4 mb-10">
-          Effective date: {effectiveDate}
-        </p>
+        {effectiveDate ? (
+          <p className="font-sans text-sm text-ink-faint mt-4 mb-10">
+            Effective date: {effectiveDate}
+          </p>
+        ) : (
+          <div className="mb-10" />
+        )}
         <div className="legal-body space-y-8 font-sans text-base text-ink-soft leading-relaxed [&_h2]:font-display [&_h2]:text-display-md [&_h2]:text-ink [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1.5 [&_strong]:text-ink">
           {children}
         </div>

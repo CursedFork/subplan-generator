@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { usePlans } from '@/hooks/usePlans';
+import { useSubscription } from '@/hooks/useSubscription';
 import { printPlan } from '@/lib/printPlan';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +15,7 @@ function formatDate(iso: string): string {
 export default function Dashboard() {
   const { data: profile } = useProfile();
   const { data: plans } = usePlans();
+  const { data: usage } = useSubscription();
 
   const firstName = profile?.display_name?.split(' ').at(0) ?? 'there';
   const profileIncomplete = profile && !profile.school_info?.school_name;
@@ -25,9 +27,42 @@ export default function Dashboard() {
     <div className="space-y-10">
 
       {/* Welcome */}
-      <div>
+      <div className="flex items-baseline justify-between flex-wrap gap-3">
         <h1 className="font-display text-display-lg text-ink">Welcome back, {firstName}.</h1>
+        {usage && (
+          <Link
+            to="/billing"
+            className="font-sans text-sm text-ink-faint hover:text-terracotta transition-colors"
+            title="Manage your plan"
+          >
+            {usage.tier === 'free'
+              ? `Free plan · ${Math.max(0, usage.cap - usage.used)} of ${usage.cap} plans left`
+              : `${usage.tier === 'pro' ? 'Pro' : 'Basic'} · ${usage.used} of ${usage.cap} used`}
+          </Link>
+        )}
       </div>
+
+      {/* Out-of-plans nudge */}
+      {usage && usage.used >= usage.cap && (
+        <div className="rounded-md border border-terracotta/30 bg-terracotta-soft px-5 py-4 flex gap-3 items-start">
+          <div>
+            <p className="font-sans text-sm font-semibold text-ink">
+              {usage.tier === 'free' ? "You've used your free plans" : 'Plan limit reached'}
+            </p>
+            <p className="font-sans text-sm text-ink-soft mt-0.5 leading-relaxed">
+              {usage.tier === 'free'
+                ? 'Subscribe to keep creating plans — from about $6.58 a month, billed annually.'
+                : 'Upgrade your plan or wait for your renewal to create more.'}
+            </p>
+            <Link
+              to="/billing"
+              className="inline-block mt-2 text-sm font-sans font-semibold text-terracotta hover:underline underline-offset-2"
+            >
+              See plans →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Profile nudge — shown until school_name is set */}
       {profileIncomplete && (
