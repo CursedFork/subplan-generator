@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CheckCircle2, XCircle, CreditCard, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, CreditCard, Sparkles, Gift, Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useProfile } from '@/hooks/useProfile';
+import { referralLink } from '@/lib/referral';
 import { startCheckout, openBillingPortal, type BillingTier, type BillingPeriod } from '@/lib/billingClient';
 
 const TIER_LABELS: Record<string, string> = {
@@ -280,6 +282,59 @@ export default function Billing() {
           you keep access until the end of your paid period.
         </p>
       </div>
+
+      <ReferralCard />
     </div>
+  );
+}
+
+// ─── Referral card ───────────────────────────────────────────────────
+
+function ReferralCard() {
+  const { data: profile } = useProfile();
+  const [copied, setCopied] = useState(false);
+
+  if (!profile?.referral_code) return null;
+  const link = referralLink(profile.referral_code);
+
+  function handleCopy() {
+    void navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-1">
+        <Gift className="w-4 h-4 text-terracotta" />
+        <h2 className="font-display text-display-md text-ink rule-ornament">
+          Give plans, get plans
+        </h2>
+      </div>
+      <p className="font-sans text-sm text-ink-soft mt-3 leading-relaxed max-w-lg">
+        Share your link with a colleague. When they subscribe, you get{' '}
+        <strong className="text-ink font-semibold">3 bonus plans</strong> and they get 1 —
+        on top of whatever plan you're each on.
+      </p>
+
+      <div className="flex items-center gap-2 mt-5 max-w-lg">
+        <code className="flex-1 truncate rounded-md border border-rule bg-rule/20 px-3 py-2 font-mono text-xs text-ink theme-aware">
+          {link}
+        </code>
+        <Button variant="outline" size="sm" onClick={handleCopy}>
+          {copied
+            ? <><Check className="w-3.5 h-3.5 mr-1.5 text-sage" />Copied</>
+            : <><Copy className="w-3.5 h-3.5 mr-1.5" />Copy link</>}
+        </Button>
+      </div>
+
+      {profile.referral_credits > 0 && (
+        <p className="font-sans text-sm text-sage mt-4">
+          You have {profile.referral_credits} bonus plan{profile.referral_credits === 1 ? '' : 's'} —
+          they're used automatically before your monthly allowance.
+        </p>
+      )}
+    </Card>
   );
 }

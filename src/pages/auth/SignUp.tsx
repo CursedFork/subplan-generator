@@ -1,6 +1,7 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { captureReferralCode, parkReferralCode, pendingReferralCode } from '@/lib/referral';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -36,6 +37,17 @@ export default function SignUp() {
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // ?ref=CODE from a shared link pre-fills the referral field; either way the
+  // code is parked in localStorage and attached after the first sign-in.
+  useEffect(() => {
+    captureReferralCode();
+    const parked = pendingReferralCode();
+    if (parked) {
+      setReferralCode(parked);
+      setShowReferral(true);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
@@ -51,6 +63,9 @@ export default function SignUp() {
       setFieldErrors(errors);
       return;
     }
+
+    // Park the typed code so useAttachReferral picks it up after first sign-in.
+    if (referralCode) parkReferralCode(referralCode);
 
     setLoading(true);
     const { error: authError } = await supabase.auth.signUp({

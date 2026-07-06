@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { usePlans } from '@/hooks/usePlans';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAttachReferral } from '@/hooks/useReferral';
 import { printPlan } from '@/lib/printPlan';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const { data: profile } = useProfile();
   const { data: plans } = usePlans();
   const { data: usage } = useSubscription();
+  useAttachReferral();
 
   const firstName = profile?.display_name?.split(' ').at(0) ?? 'there';
   const profileIncomplete = profile && !profile.school_info?.school_name;

@@ -1,5 +1,6 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { captureReferralCode } from '@/lib/referral';
 import { useAuth } from '@/hooks/useAuth';
 import { Logo } from '@/components/logo/Logo';
 import { Button } from '@/components/ui/Button';
@@ -108,6 +109,9 @@ function PricingCard({
 export default function Landing() {
   const { user, loading } = useAuth();
   const [annual, setAnnual] = useState(true);
+
+  // Park ?ref=CODE for attachment after signup.
+  useEffect(() => { captureReferralCode(); }, []);
 
   return (
     <div className="min-h-screen bg-paper theme-aware">

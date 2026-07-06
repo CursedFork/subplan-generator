@@ -117,6 +117,18 @@ Deno.serve(async (req: Request) => {
             sub.metadata = { ...sub.metadata, user_id: session.client_reference_id };
           }
           await upsertSubscription(sub);
+
+          // First paid subscription qualifies a pending referral:
+          // +3 plan credits to the referrer, +1 to this user. The RPC is a
+          // no-op (returns false) when no pending referral exists.
+          const userId = sub.metadata?.['user_id'];
+          if (userId) {
+            const { data: credited, error: refError } = await admin.rpc('credit_referral', {
+              p_referee: userId,
+            });
+            if (refError) console.error('[webhook] credit_referral failed:', refError.message);
+            else if (credited) console.log(`[webhook] Referral credited for ${userId}`);
+          }
         }
         break;
       }
