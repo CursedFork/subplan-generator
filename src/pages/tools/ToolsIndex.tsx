@@ -28,7 +28,7 @@ const TOOLS: ToolDef[] = [
     description:
       'Turn any topic and learning objective into a ready-to-print worksheet. Specify grade level and get differentiated versions in seconds.',
     href: '/tools/worksheets',
-    status: 'coming-soon',
+    status: 'active',
   },
   {
     icon: LayoutGrid,
@@ -44,7 +44,7 @@ const TOOLS: ToolDef[] = [
     description:
       'Generate balanced small groups from your class roster — by reading level, IEP status, leadership, or any attribute you track.',
     href: '/tools/groups',
-    status: 'coming-soon',
+    status: 'active',
   },
 ];
 
