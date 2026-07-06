@@ -103,6 +103,19 @@ payment methods.
 3. Create a live-mode webhook endpoint (same URL, same events).
 4. Swap the six secrets to their live values (`sk_live_...`, live `whsec_...`, live price IDs).
 5. Redeploy the three billing functions.
+6. **Purge test-mode subscriptions** — rows created by 4242-card checkouts during
+   testing keep granting paid tiers until deleted. Run in the SQL Editor
+   (https://supabase.com/dashboard/project/mcvlnscbekyivvlnlisu/sql/new):
+
+   ```sql
+   -- Test-mode Stripe IDs are harmless to remove; live ones don't exist yet.
+   delete from public.subscriptions;
+   ```
+
+   (If you want to keep a specific row, add `where user_id != '<uuid>'`.)
+7. Optionally delete the test-mode webhook endpoint in the Stripe dashboard
+   (Developers → Webhooks, test mode). The webhook function ignores
+   cross-mode events either way — it checks `event.livemode` against the key.
 
 ## Founding-teacher promo (optional but recommended)
 

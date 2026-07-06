@@ -86,6 +86,21 @@ Deno.serve(async (req: Request) => {
     return new Response('Invalid signature', { status: 400 });
   }
 
+  // Live/test mode guard: only process events whose mode matches our key.
+  // Signature verification already blocks cross-mode events (different
+  // signing secrets), but this makes a misconfiguration fail loudly instead
+  // of granting free subscriptions from test-card checkouts.
+  const keyIsLive = Deno.env.get('STRIPE_SECRET_KEY')!.startsWith('sk_live');
+  if (event.livemode !== keyIsLive) {
+    console.error(
+      `[webhook] Mode mismatch: event livemode=${event.livemode} but key is ${keyIsLive ? 'live' : 'test'} — ignoring ${event.type}`,
+    );
+    return new Response(JSON.stringify({ received: true, ignored: 'mode_mismatch' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
