@@ -1,7 +1,17 @@
 # Stripe Setup — Teacher's Pet
 
-Everything code-side is done. Follow these steps to go live. Total time: ~45 minutes.
-Do it all in **test mode** first, then repeat products/webhook/secrets in live mode.
+> **STATUS (July 6, 2026): Test mode is fully wired.** Account created, products/prices
+> created, webhook endpoint live, all six secrets set, portal configured. Steps 1–6 are
+> DONE for test mode. What remains: your end-to-end click test (step 7) and going
+> live (step 8) when you're ready to take real money.
+>
+> Test-mode reference:
+> - Products: `prod_Upt7yPKDZ9kZrD` (Basic), `prod_Upt752JgBzqaGg` (Pro)
+> - Prices: Basic $9/mo `price_1TqDRHEASQdv5ZD4Wtlu0A3Z`, Basic $79/yr
+>   `price_1TqDRHEASQdv5ZD4iT95aCBG`, Pro $18/mo `price_1TqDRHEASQdv5ZD4UCfwXtAL`,
+>   Pro $158/yr `price_1TqDRHEASQdv5ZD4jyw9vOVC`
+> - Webhook endpoint: `we_1TqDRiEASQdv5ZD4hEGXtEpX`
+> - Portal config: `bpc_1TqDSpEASQdv5ZD4CA60awL6` (default)
 
 ## 1. Create the Stripe account (10 min)
 
