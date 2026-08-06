@@ -1,7 +1,11 @@
 # Teacher's Pet — Release Checklist
 
-Target: **public launch late August 2026** (HCPSS returns ~Aug 24; teacher
-pre-service week is the acquisition window). Domain purchase planned ~Aug 1.
+Target: **live by mid-August 2026**, maintenance-only by the time school
+starts. Revised 2026-07 when Andrew accepted a full-time teaching position:
+August is now classroom-setup season, so all launch work front-loads into
+July. Launching *before* pre-service week also means the app is live when
+teachers build their sub folders — the acquisition window — instead of
+launching during it.
 
 Legend: 🧑 = needs Andrew (accounts/money/decisions) · 🤖 = Claude can do it
 · ✅ = done
@@ -46,7 +50,7 @@ Legend: 🧑 = needs Andrew (accounts/money/decisions) · 🤖 = Claude can do i
 
 ---
 
-## Phase 2 — Domain day (~Aug 1)
+## Phase 2 — Domain day (THIS WEEK — waiting saves ~$2 and costs the timeline)
 
 - [ ] 🧑 Buy the domain (teacherspet.app or similar, ~$12–20/yr)
 - [ ] 🧑 Add domain to Vercel project (Settings → Domains; Vercel handles DNS
@@ -68,7 +72,7 @@ Legend: 🧑 = needs Andrew (accounts/money/decisions) · 🤖 = Claude can do i
 
 ---
 
-## Phase 3 — Stripe go-live (~Aug 10–15)
+## Phase 3 — Stripe go-live (late July)
 
 Follow SETUP_STRIPE.md step 8. In order:
 
@@ -91,7 +95,17 @@ Follow SETUP_STRIPE.md step 8. In order:
 
 ---
 
-## Phase 4 — Launch (~Aug 18–31)
+## Phase 4 — Launch (Aug 1–15, BEFORE pre-service week)
+
+New-teacher advantages to use:
+- "I'm a classroom teacher and I built this" beats "I'm a sub" in every
+  teacher group — and your own school's staff room is now a seed market.
+- Dogfood your own classroom: build your real sub folder, roster, and
+  seating chart in the app during setup week. That's your screenshots,
+  your demo content, and your authenticity in one move.
+- After school starts you get ~15 min/day for this. Design for it:
+  support email forwarding to your phone, uptime alerts, nothing that
+  needs daily hands-on attention.
 
 - [ ] 🧑 Soft launch: HCPSS colleagues, the two beta testers' schools,
       personal network. Message: "set up your emergency sub folder in
